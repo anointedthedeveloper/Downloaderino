@@ -10,14 +10,13 @@ interface NavbarProps {
   favCount: number;
   onLogoClick: () => void;
   onSearchFocus: () => void;
-  onAdminClick: () => void;
 }
 
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs));
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, onLogoClick, onSearchFocus, onAdminClick }) => {
+export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, onLogoClick, onSearchFocus }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
