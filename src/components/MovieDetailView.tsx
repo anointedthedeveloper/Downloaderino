@@ -216,7 +216,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
 
               {/* Links Display */}
               <AnimatePresence>
-                {links && (
+                {links && links.downloads && (
                   <motion.div 
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -228,7 +228,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                        <h4 className="font-black text-sm uppercase tracking-widest text-gray-400">Available Direct Mirrors</h4>
                     </div>
                     <div className="grid gap-4">
-                      {links.links.map((link, idx) => (
+                      {links.downloads.map((link, idx) => (
                         <motion.a
                           key={idx}
                           href={link.url}
@@ -241,14 +241,14 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                         >
                           <div className="flex items-center gap-5">
                             <div className="w-12 h-12 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-primary font-black text-xs shadow-sm group-hover:bg-primary group-hover:text-white transition-colors">
-                              {link.quality.toUpperCase()}
+                              {link.resolution.toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-bold text-foreground group-hover:text-primary transition-colors">{link.title}</p>
+                              <p className="font-bold text-foreground group-hover:text-primary transition-colors">{link.resolution} — {link.format}</p>
                               <div className="flex items-center gap-3 mt-1">
-                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{link.quality} HD</span>
+                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{link.size_mb} MB</span>
                                  <div className="w-1 h-1 rounded-full bg-gray-300" />
-                                 <span className="text-[10px] font-black uppercase tracking-widest text-primary">Direct CDN</span>
+                                 <span className="text-[10px] font-black uppercase tracking-widest text-primary">High-Speed CDN</span>
                               </div>
                             </div>
                           </div>

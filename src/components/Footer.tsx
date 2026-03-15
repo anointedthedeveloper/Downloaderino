@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Twitter, Heart, Youtube, Instagram, Mail, Shield, Zap, Globe } from 'lucide-react';
+import { Github, Twitter, Heart, Youtube, Instagram, Shield, Zap, Globe, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const Footer: React.FC = () => (
@@ -20,50 +20,76 @@ export const Footer: React.FC = () => (
             The world's most advanced movie downloader platform. Experience lightning-fast speeds, premium content, and a clean interface.
           </p>
           <div className="flex items-center gap-4">
-            {[Twitter, Github, Youtube, Instagram].map((Icon, i) => (
-              <motion.a
-                key={i}
-                href="#"
-                whileHover={{ y: -4, scale: 1.1 }}
-                className="w-10 h-10 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
-              >
-                <Icon size={18} />
-              </motion.a>
-            ))}
+            <motion.a
+              href="#"
+              whileHover={{ y: -4, scale: 1.1 }}
+              className="w-10 h-10 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
+            >
+              <Twitter size={18} />
+            </motion.a>
+            <motion.a
+              href="https://github.com/anointedthedeveloper/Downloaderino"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ y: -4, scale: 1.1 }}
+              className="w-10 h-10 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
+            >
+              <Github size={18} />
+            </motion.a>
+            <motion.a
+              href="#"
+              whileHover={{ y: -4, scale: 1.1 }}
+              className="w-10 h-10 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
+            >
+              <Youtube size={18} />
+            </motion.a>
+            <motion.a
+              href="#"
+              whileHover={{ y: -4, scale: 1.1 }}
+              className="w-10 h-10 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
+            >
+              <Instagram size={18} />
+            </motion.a>
           </div>
+          <motion.a
+            href="https://github.com/anointedthedeveloper/Downloaderino"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ scale: 1.02 }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-sm font-bold hover:bg-primary/20 transition-all"
+          >
+            <Star size={14} fill="currentColor" />
+            If you like it, give it a star on GitHub!
+          </motion.a>
         </div>
 
         {/* Links Sections */}
-        <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8">
+        <div className="lg:col-span-7 grid grid-cols-2 gap-8">
           <div className="space-y-6">
             <h4 className="font-bold text-xs uppercase tracking-[0.2em] text-primary">Platform</h4>
             <ul className="space-y-4">
-              {['Movies', 'Series', 'Trending', 'New Releases'].map((item) => (
-                <li key={item}>
+              {[
+                { label: 'Movies', comingSoon: true },
+                { label: 'Series', comingSoon: true },
+                { label: 'Trending', comingSoon: false },
+                { label: 'New Releases', comingSoon: false },
+              ].map((item) => (
+                <li key={item.label}>
                   <button className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary transition-colors flex items-center gap-2 group">
                     <div className="w-1 h-1 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {item}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          <div className="space-y-6">
-            <h4 className="font-bold text-xs uppercase tracking-[0.2em] text-primary">Company</h4>
-            <ul className="space-y-4">
-              {['About Us', 'Contact', 'Terms', 'Privacy'].map((item) => (
-                <li key={item}>
-                  <button className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary transition-colors flex items-center gap-2 group">
-                    <div className="w-1 h-1 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {item}
+                    {item.label}
+                    {item.comingSoon && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary rounded-md">
+                        Soon
+                      </span>
+                    )}
                   </button>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="space-y-6 hidden sm:block">
+          <div className="space-y-6">
             <h4 className="font-bold text-xs uppercase tracking-[0.2em] text-primary">Stats</h4>
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
@@ -92,7 +118,17 @@ export const Footer: React.FC = () => (
           </div>
         </div>
         <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-surface border border-border-subtle">
-          Made with <Heart size={12} className="text-red-500 fill-red-500" /> by <span className="text-foreground font-bold"></span>
+          Made with <Heart size={12} className="text-red-500 fill-red-500 mx-0.5" /> and{' '}
+          <span className="flex gap-0.5 mx-1">
+            {['#22C55E', '#16A34A', '#15803D', '#22C55E', '#4ADE80'].map((color, i) => (
+              <span
+                key={i}
+                style={{ backgroundColor: color }}
+                className="w-2 h-2 rounded-[1px] inline-block"
+              />
+            ))}
+          </span>
+          green pixels
         </div>
       </div>
     </div>

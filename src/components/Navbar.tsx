@@ -28,9 +28,9 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
   }, []);
 
   const navLinks = [
-    { name: 'Home', onClick: onLogoClick },
-    { name: 'Movies', onClick: () => {} },
-    { name: 'Series', onClick: () => {} },
+    { name: 'Home', onClick: onLogoClick, comingSoon: false },
+    { name: 'Movies', onClick: () => {}, comingSoon: true },
+    { name: 'Series', onClick: () => {}, comingSoon: true },
   ];
 
   return (
@@ -66,9 +66,14 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
             <button
               key={link.name}
               onClick={link.onClick}
-              className="px-4 py-2 rounded-lg text-sm font-semibold hover:bg-surface hover:text-primary transition-all"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-surface hover:text-primary transition-all"
             >
               {link.name}
+              {link.comingSoon && (
+                <span className="px-1.5 py-0.5 text-[8px] font-black uppercase tracking-widest bg-primary/10 text-primary rounded-md">
+                  Soon
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -137,7 +142,14 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
                   onClick={() => { link.onClick(); setIsMenuOpen(false); }} 
                   className="flex items-center justify-between px-4 py-3 rounded-xl font-bold text-lg hover:bg-surface hover:text-primary transition-all"
                 >
-                  {link.name}
+                  <span className="flex items-center gap-2">
+                    {link.name}
+                    {link.comingSoon && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary rounded-md">
+                        Soon
+                      </span>
+                    )}
+                  </span>
                   <div className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100" />
                 </button>
               ))}

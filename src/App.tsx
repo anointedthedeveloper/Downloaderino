@@ -8,8 +8,10 @@ import { MovieDetailView } from './components/MovieDetailView';
 import { TrailerModal } from './components/TrailerModal';
 import { NotFound } from './components/NotFound';
 
+const linksCache = new Map<string, LinksResponse>();
+
 const App: React.FC = () => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [results, setResults] = useState<MovieItem[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<MovieDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -94,9 +96,15 @@ const App: React.FC = () => {
 
   const loadLinks = async () => {
     if (!selectedMovie || !detailPath) return;
+    const cacheKey = `${selectedMovie.subject_id}:${detailPath}:${season}:${episode}`;
+    if (linksCache.has(cacheKey)) {
+      setLinks(linksCache.get(cacheKey)!);
+      return;
+    }
     setLoading(true);
     try {
       const response = await api.getLinks(selectedMovie.subject_id, detailPath, season, episode);
+      linksCache.set(cacheKey, response.data);
       setLinks(response.data);
     } catch (error) {
       console.error(error);

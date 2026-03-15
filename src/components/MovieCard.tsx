@@ -51,10 +51,6 @@ export const MovieCard: React.FC<MovieCardProps> = ({ item, isFavorite, onToggle
               </div>
             </div>
             
-            <button className="w-full py-2 bg-white text-black rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-colors">
-              <Play size={14} fill="currentColor" />
-              Watch Now
-            </button>
           </motion.div>
         </div>
 
