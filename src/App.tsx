@@ -33,22 +33,38 @@ const App: React.FC = () => {
   // Track visit once per session
   useEffect(() => { trackVisit(); }, []);
 
-  // Handle /admin-analytics route on load
+  // Restore correct view on hard reload / direct URL visit
   useEffect(() => {
-    if (window.location.pathname === '/admin-analytics') setShowAdmin(true);
+    const path = window.location.pathname;
+    if (path === '/admin-analytics') {
+      setShowAdmin(true);
+    } else if (path !== '/') {
+      // Slug URL — try to load the detail
+      const slug = path.replace('/', '');
+      // Store slug so user stays on the page after reload
+      sessionStorage.setItem('dl_reload_slug', slug);
+      loadDetail(slug);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
-      if (window.location.pathname === '/admin-analytics') {
+      const path = window.location.pathname;
+      if (path === '/admin-analytics') {
         setShowAdmin(true);
-      } else if (window.location.pathname !== '/') {
-        setNotFound(true);
-      } else {
+        setSelectedMovie(null);
+        setNotFound(false);
+      } else if (path === '/') {
         setNotFound(false);
         setSelectedMovie(null);
         setShowAdmin(false);
+      } else {
+        // Back/forward to a detail slug — reload it
+        setShowAdmin(false);
+        setNotFound(false);
+        loadDetail(path.replace('/', ''));
       }
     };
 
