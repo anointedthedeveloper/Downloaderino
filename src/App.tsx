@@ -195,7 +195,6 @@ const App: React.FC = () => {
           if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus(); }
         }, 50);
       }}
-      onAdminClick={() => setShowAdmin(true)}
     >
       <div className="container-custom pt-8 pb-20">
         <AnimatePresence mode="wait">

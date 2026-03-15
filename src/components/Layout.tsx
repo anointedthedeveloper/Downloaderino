@@ -9,11 +9,10 @@ interface LayoutProps {
   favCount: number;
   onLogoClick: () => void;
   onSearchFocus: () => void;
-  onAdminClick: () => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ 
-  children, isDark, onToggleDark, favCount, onLogoClick, onSearchFocus, onAdminClick,
+  children, isDark, onToggleDark, favCount, onLogoClick, onSearchFocus,
 }) => {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
@@ -32,7 +31,6 @@ export const Layout: React.FC<LayoutProps> = ({
         favCount={favCount} 
         onLogoClick={onLogoClick}
         onSearchFocus={onSearchFocus}
-        onAdminClick={onAdminClick}
       />
       
       <main className="flex-grow relative z-10">
