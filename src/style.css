@@ -1,0 +1,218 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --primary: #00FF41;
+  --primary-dim: rgba(0, 255, 65, 0.12);
+  --primary-glow: rgba(0, 255, 65, 0.3);
+  --bg: #f5f5f7;
+  --bg-2: #ebebed;
+  --surface: #ffffff;
+  --surface-2: #f0f0f2;
+  --border: rgba(0, 0, 0, 0.08);
+  --fg: #0a0a0a;
+  --fg-2: rgba(10, 10, 10, 0.55);
+  --fg-3: rgba(10, 10, 10, 0.3);
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-glow: 0 0 0 1px var(--primary), 0 0 20px var(--primary-glow), 0 0 40px rgba(0,255,65,0.1);
+  --shadow-glow-sm: 0 0 12px var(--primary-glow);
+}
+
+.dark {
+  --bg: #080808;
+  --bg-2: #0f0f0f;
+  --surface: #111113;
+  --surface-2: #1a1a1e;
+  --border: rgba(255, 255, 255, 0.07);
+  --fg: #f0f0f0;
+  --fg-2: rgba(240, 240, 240, 0.5);
+  --fg-3: rgba(240, 240, 240, 0.25);
+  --shadow-card: 0 2px 12px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-glow: 0 0 0 1px var(--primary), 0 0 24px var(--primary-glow), 0 0 60px rgba(0,255,65,0.08);
+}
+
+@theme {
+  --color-primary: var(--primary);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg2: var(--fg-2);
+  --color-fg3: var(--fg-3);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
+
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  transition: background 0.3s, color 0.3s;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Glow utilities ── */
+.glow        { box-shadow: var(--shadow-glow-sm); }
+.glow-ring   { box-shadow: var(--shadow-glow); }
+.glow-text   { text-shadow: 0 0 24px var(--primary-glow); }
+
+/* ── Noise overlay ── */
+.noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ── Animated grid background ── */
+.hero-grid {
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ── Orb blobs ── */
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: orb-drift 12s ease-in-out infinite alternate;
+}
+.orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(0,255,65,0.15) 0%, transparent 70%);
+  top: -120px; left: -100px;
+  animation-delay: 0s;
+}
+.orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(0,255,65,0.1) 0%, transparent 70%);
+  top: 60px; right: -80px;
+  animation-delay: -4s;
+}
+
+@keyframes orb-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(30px, 20px) scale(1.05); }
+}
+
+/* ── Card hover shimmer ── */
+.card-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.card-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(0,255,65,0.06) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+  z-index: 1;
+  pointer-events: none;
+}
+.card-shimmer:hover::before {
+  transform: translateX(100%);
+}
+
+/* ── Pill badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  background: var(--primary-dim);
+}
+
+/* ── Input focus ring ── */
+.input-field {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--fg);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+.input-field:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0,255,65,0.12);
+}
+
+/* ── Primary button ── */
+.btn-primary {
+  background: var(--primary);
+  color: #000;
+  font-weight: 800;
+  border-radius: 14px;
+  padding: 14px 24px;
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+  box-shadow: var(--shadow-glow-sm);
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary:hover  { transform: translateY(-1px); filter: brightness(1.1); box-shadow: var(--shadow-glow); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.45; pointer-events: none; }
+
+/* ── Ghost button ── */
+.btn-ghost {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--fg);
+  font-weight: 600;
+  border-radius: 14px;
+  padding: 12px 20px;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.btn-ghost:hover { border-color: var(--primary); background: var(--primary-dim); color: var(--primary); }
+
+/* ── Surface card ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Backdrop blur hero ── */
+.detail-backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  filter: blur(60px) saturate(0.6);
+  opacity: 0.25;
+  transform: scale(1.1);
+}
