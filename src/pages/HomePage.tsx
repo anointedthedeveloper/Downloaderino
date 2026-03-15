@@ -66,7 +66,7 @@ const HomePage: React.FC<Props> = ({
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="text-5xl md:text-8xl font-black tracking-tight leading-[0.9] text-foreground"
+                className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tight leading-[0.9] text-foreground"
               >
                 UNLIMITED<br />
                 <span className="text-primary drop-shadow-[0_10px_30px_rgba(34,197,94,0.3)]">ENTERTAINMENT.</span>
@@ -77,8 +77,7 @@ const HomePage: React.FC<Props> = ({
                 transition={{ delay: 0.1, duration: 0.6 }}
                 className="text-lg md:text-xl text-gray-500 dark:text-gray-400 font-medium max-w-2xl mx-auto leading-relaxed"
               >
-                The fastest way to search and download high-quality movies and series. 
-                Experience a clean, ad-free interface designed for enthusiasts.
+                Time to download-diddly that file-erino.
               </motion.p>
             </div>
   
@@ -96,6 +95,7 @@ const HomePage: React.FC<Props> = ({
                   <div className="flex-grow flex items-center px-4">
                     <Search className="text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
                     <input
+                      id="hero-search"
                       type="text"
                       value={query}
                       onChange={e => setQuery(e.target.value)}
@@ -178,7 +178,11 @@ const HomePage: React.FC<Props> = ({
                   Search Results
                 </h2>
                 <p className="text-sm font-medium text-gray-400">
-                  Showing <span className="text-foreground">{results.length}</span> titles from <span className="text-foreground">{totalResults}</span> found.
+                  Showing{' '}
+                  <span className="text-foreground font-bold">{results.length}</span>{' '}
+                  of{' '}
+                  <span className="text-foreground font-bold">{totalResults > 0 ? totalResults.toLocaleString() : results.length}</span>{' '}
+                  titles found.
                 </p>
               </div>
               

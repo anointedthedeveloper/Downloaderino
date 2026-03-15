@@ -1,0 +1,73 @@
+Base URL
+https://anointedthedeveloper-downloaderinoapi.hf.space
+
+1. Search
+GET /search?q={query}&page={n}
+
+/search?q=batman
+/search?q=batman&page=2
+
+Copy
+Returns raw API data with items[], pager, counts. Each item has cover.url, genre (comma-string), trailer, etc.
+
+2. Detail
+GET /detail?detailPath={detailPath}
+
+/detail?detailPath=batman-begins-2005-1
+
+Copy
+Returns: title, description, subject_id, cover, release_date, country, genre, imdb_rating, trailer_url, backdrop, dubs[], seasons[]
+
+3. Links (single episode)
+GET /links?subjectId={id}&detailPath={path}&se={n}&ep={n}
+
+/links?subjectId=12345&detailPath=batman-begins-2005-1&se=1&ep=1
+
+Copy
+Returns: downloads[] (resolution, format, size_mb, url) and captions[] (lang, lang_name, size_kb, url)
+
+4. Links (full season)
+GET /links/season?subjectId={id}&detailPath={path}&se={n}
+
+/links/season?subjectId=12345&detailPath=batman-begins-2005-1&se=1
+
+Copy
+Returns array of all episodes with their download + caption links.
+
+5. Stream (single episode)
+GET /stream?subjectId={id}&detailPath={path}&se={n}&ep={n}&resolution={p}&lang={lang}
+
+/stream?subjectId=12345&detailPath=batman-begins-2005-1&se=1&ep=1
+/stream?subjectId=12345&detailPath=batman-begins-2005-1&se=1&ep=1&resolution=720&lang=en
+/stream?subjectId=12345&detailPath=batman-begins-2005-1&se=1&ep=1&lang=all
+/stream?subjectId=12345&detailPath=batman-begins-2005-1&se=1&ep=1&lang=none
+
+Copy
+resolution — 360, 480, 720, 1080 (defaults to first available)
+
+lang — en (default), all, none, or comma-separated e.g. fr,es
+
+type=caption&lang=en — returns .srt subtitle file only instead of video
+
+Streams MP4 with subtitles muxed in as tracks.
+
+6. Stream (full season ZIP)
+GET /stream/season?subjectId={id}&detailPath={path}&se={n}&resolution={p}&lang={lang}&format={fmt}
+
+/stream/season?subjectId=12345&detailPath=batman-begins-2005-1&se=1
+/stream/season?subjectId=12345&detailPath=batman-begins-2005-1&se=1&resolution=720&lang=en
+
+Copy
+format — folder (default, zipped in subfolder) or flat (all files at root)
+
+Streams a .zip of all episodes in the season.
+
+Typical Flow
+/search?q=batman → grab detailPath from an item
+
+/detail?detailPath=... → grab subject_id, check seasons[]
+
+/links?subjectId=...&detailPath=...&se=1&ep=1 → see available resolutions
+
+/stream?subjectId=...&detailPath=...&se=1&ep=1&resolution=720 → download/stream
+

@@ -9,9 +9,13 @@ export interface MovieItem {
 }
 
 export interface Season {
-  id: string;
-  number: number;
-  episodes_count: number;
+  id?: string;
+  number?: number;
+  season_number?: number;
+  se?: number;
+  episodes_count?: number;
+  episode_count?: number;
+  episodes?: number;
 }
 
 export interface MovieDetail {

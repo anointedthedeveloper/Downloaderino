@@ -62,9 +62,16 @@ const App: React.FC = () => {
     setNotFound(false);
     try {
       const response = await api.search(query, page);
-      setResults(response.data.items || []);
+      const items = response.data.items || [];
+      setResults(items);
       setTotalPages(response.data.pager?.pages || 1);
-      setTotalResults(response.data.pager?.total || 0);
+      const total =
+        response.data.pager?.total ||
+        response.data.pager?.total_items ||
+        response.data.counts ||
+        response.data.total ||
+        items.length;
+      setTotalResults(total);
       setCurrentPage(page);
       setSelectedMovie(null);
     } catch (error) {
@@ -133,6 +140,13 @@ const App: React.FC = () => {
       onToggleDark={() => setIsDarkMode(!isDarkMode)}
       favCount={favorites.length}
       onLogoClick={handleBackToHome}
+      onSearchFocus={() => {
+        handleBackToHome();
+        setTimeout(() => {
+          const el = document.getElementById('hero-search');
+          if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus(); }
+        }, 50);
+      }}
     >
       <div className="container-custom pt-8 pb-20">
         <AnimatePresence mode="wait">

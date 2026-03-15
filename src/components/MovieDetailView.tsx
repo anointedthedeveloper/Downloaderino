@@ -161,9 +161,12 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                       onChange={(e) => { setSeason(Number(e.target.value)); }}
                       className="input-base h-14 font-bold text-base bg-background"
                     >
-                      {movie.seasons.map(s => (
-                        <option key={s.number} value={s.number}>Season {s.number}</option>
-                      ))}
+                      {movie.seasons.map((s, idx) => {
+                        const num = s.number ?? s.season_number ?? s.se ?? (idx + 1);
+                        return (
+                          <option key={num} value={num}>Season {num}</option>
+                        );
+                      })}
                     </select>
                   </div>
                   <div className="space-y-4">
@@ -173,7 +176,10 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                     <input
                       type="number"
                       min="1"
-                      max={movie.seasons.find(s => s.number === season)?.episodes_count || 100}
+                      max={(() => {
+                        const s = movie.seasons.find((s, idx) => (s.number ?? s.season_number ?? s.se ?? idx + 1) === season);
+                        return s?.episodes_count ?? s?.episode_count ?? s?.episodes ?? 100;
+                      })()}
                       value={episode}
                       onChange={(e) => { setEpisode(Number(e.target.value)); }}
                       className="input-base h-14 font-bold text-base bg-background"
@@ -241,12 +247,12 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                         >
                           <div className="flex items-center gap-5">
                             <div className="w-12 h-12 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-primary font-black text-xs shadow-sm group-hover:bg-primary group-hover:text-white transition-colors">
-                              {link.resolution.toUpperCase()}
+                              {String(link.resolution || '').toUpperCase() || '?'}
                             </div>
                             <div>
-                              <p className="font-bold text-foreground group-hover:text-primary transition-colors">{link.resolution} — {link.format}</p>
+                              <p className="font-bold text-foreground group-hover:text-primary transition-colors">{link.resolution || 'Unknown'} — {link.format || ''}</p>
                               <div className="flex items-center gap-3 mt-1">
-                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{link.size_mb} MB</span>
+                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{link.size_mb ? `${link.size_mb} MB` : 'Size N/A'}</span>
                                  <div className="w-1 h-1 rounded-full bg-gray-300" />
                                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">High-Speed CDN</span>
                               </div>

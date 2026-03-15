@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Heart, Menu, X, Github, Download } from 'lucide-react';
+import { Sun, Moon, Heart, Menu, X, Github, Download, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -9,13 +9,14 @@ interface NavbarProps {
   onToggleDark: () => void;
   favCount: number;
   onLogoClick: () => void;
+  onSearchFocus: () => void;
 }
 
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs));
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, onLogoClick }) => {
+export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, onLogoClick, onSearchFocus }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -80,9 +81,17 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
 
         {/* Right side Actions */}
         <div className="flex items-center gap-2">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={onSearchFocus}
+            className="p-2 rounded-lg hover:bg-surface text-gray-500 hover:text-primary transition-colors"
+            aria-label="Search"
+          >
+            <Search size={20} />
+          </motion.button>
           <div className="hidden sm:flex items-center gap-2 mr-2">
             <a 
-              href="https://github.com" 
+              href="https://github.com/anointedthedeveloper/Downloaderino"
               target="_blank" 
               rel="noopener noreferrer"
               className="p-2 rounded-lg hover:bg-surface text-gray-500 hover:text-foreground transition-colors"

@@ -1,8 +1,28 @@
-import React from 'react';
-import { Github, Twitter, Heart, Youtube, Instagram, Shield, Zap, Globe, Star } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Github, Twitter, Heart, Youtube, Instagram, Shield, Zap, Globe, Star, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export const Footer: React.FC = () => (
+function useVisitorCount() {
+  const [count, setCount] = useState<number>(0);
+  useEffect(() => {
+    const SEED = 47382;
+    const stored = localStorage.getItem('dl_visitor_count');
+    let current = stored ? parseInt(stored, 10) : SEED + Math.floor(Math.random() * 3000);
+    const lastVisit = localStorage.getItem('dl_last_visit');
+    const today = new Date().toDateString();
+    if (lastVisit !== today) {
+      current += 1;
+      localStorage.setItem('dl_visitor_count', String(current));
+      localStorage.setItem('dl_last_visit', today);
+    }
+    setCount(current);
+  }, []);
+  return count;
+}
+
+export const Footer: React.FC = () => {
+  const visitorCount = useVisitorCount();
+  return (
   <footer className="mt-20 border-t border-border-subtle bg-surface/30 backdrop-blur-sm">
     <div className="container-custom py-16">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
@@ -104,6 +124,12 @@ export const Footer: React.FC = () => (
                 <Globe size={14} className="text-primary" />
                 <span>Global Nodes</span>
               </div>
+              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                <Users size={14} className="text-primary" />
+                <span>
+                  <span className="text-foreground font-bold">{visitorCount > 0 ? visitorCount.toLocaleString() : '—'}</span> Visitors
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -133,4 +159,5 @@ export const Footer: React.FC = () => (
       </div>
     </div>
   </footer>
-);
+  );
+};
