@@ -1,0 +1,147 @@
+You are a senior UI/UX engineer and front-end developer.
+
+Your task is to completely redesign and refactor the styling of this React application so it looks like a modern, production-ready web app.
+
+General Requirements
+
+* The design must be clean, modern, and professional.
+* The UI must be fully responsive (mobile, tablet, and desktop).
+* Do not produce messy or random CSS.
+* Follow good UI/UX principles: spacing, hierarchy, accessibility, and usability.
+* Maintain a consistent design system across all pages.
+
+Color System
+Use only these colors and build a proper palette.
+
+Primary: Green
+Secondary: Black
+Background: White
+
+Define shades for hover states, borders, and backgrounds.
+
+Example structure:
+
+* Primary green for buttons, highlights, links
+* Black for navigation, text, and strong contrast
+* White for backgrounds and cards
+
+Dark Mode
+Implement a proper dark mode that is not broken.
+
+Dark mode rules:
+
+* Background becomes dark (near black)
+* Text becomes light
+* Green remains the primary accent
+* Maintain strong contrast and readability
+* Use CSS variables so theme switching is easy
+
+Navigation
+Redesign the navigation system.
+
+Requirements:
+
+* Clean responsive navbar
+* Logo on the left
+* Navigation links in the center or right
+* Mobile hamburger menu
+* Active page highlighting
+* Sticky header on scroll
+
+Pages
+Fix layout issues across all pages.
+
+Each page should include:
+
+* Proper container width
+* Consistent padding and margins
+* Clear visual hierarchy
+* Card layouts where appropriate
+
+Icons
+Use a modern icon library.
+
+Recommended:
+
+* Lucide icons
+  or
+* Heroicons
+
+Icons should be used for:
+
+* Buttons
+* Navigation
+* Download actions
+* Status indicators
+
+Components
+Improve and standardize components:
+
+Buttons
+
+* Primary button (green)
+* Secondary button (outlined)
+* Icon buttons
+
+Inputs
+
+* Clean modern input fields
+* Focus states
+* Validation styling
+
+Cards
+
+* Rounded corners
+* Soft shadows
+* Proper spacing
+
+Tables / lists
+
+* Clean rows
+* Hover states
+
+Layout System
+Implement a proper layout system using:
+
+* Flexbox
+* CSS Grid
+
+Spacing should follow a consistent scale.
+
+Responsiveness
+The UI must adapt properly to:
+
+Mobile
+
+* stacked layout
+* collapsible navigation
+* larger tap targets
+
+Tablet
+
+* balanced layout
+
+Desktop
+
+* wider containers
+* multi-column layouts
+
+Animations
+Add subtle animations:
+
+* button hover
+* smooth page transitions
+* micro-interactions
+
+But keep them minimal and professional.
+
+Code Quality
+
+* Refactor messy CSS
+* Remove redundant styles
+* Use reusable components
+* Organize styles clearly
+* Prefer Tailwind or a structured CSS system
+
+Final Goal
+Transform the app from a rough prototype into a clean, polished, modern downloader web application that feels like a real production product.
