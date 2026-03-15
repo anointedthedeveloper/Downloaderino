@@ -1,34 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Github, Twitter, Heart, Youtube, Instagram, Shield, Zap, Globe, Star, Users, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getAnalytics } from '../analytics';
 
 const WA_NUMBER = '2349016471351';
 
-function useVisitorCount() {
-  const [count, setCount] = useState<number>(0);
-  useEffect(() => {
-    const SEED = 52_841; // base count
-    const stored = localStorage.getItem('dl_vc');
-    const lastVisit = localStorage.getItem('dl_lv');
-    const today = new Date().toDateString();
-    let current = stored ? parseInt(stored, 10) : SEED + Math.floor(Math.random() * 5000);
-    if (!stored) {
-      // First ever visit on this browser — initialise
-      localStorage.setItem('dl_vc', String(current));
-    }
-    if (lastVisit !== today) {
-      // New day = new visit
-      current += 1;
-      localStorage.setItem('dl_vc', String(current));
-      localStorage.setItem('dl_lv', today);
-    }
-    setCount(current);
-  }, []);
-  return count;
-}
-
 export const Footer: React.FC = () => {
-  const visitorCount = useVisitorCount();
+  const visitorCount = getAnalytics().totalVisits;
   return (
   <footer className="mt-20 border-t border-border-subtle bg-surface/30 backdrop-blur-sm">
     <div className="container-custom py-16">

@@ -6,12 +6,12 @@ export interface AnalyticsData {
   totalSearches: number;
   totalDownloads: number;
   downloadsByQuality: Record<string, number>;
-  downloadsByType: Record<string, number>; // movie | series | season | range
+  downloadsByType: Record<string, number>;
   topSearches: Record<string, number>;
-  deviceTypes: Record<string, number>; // mobile | tablet | desktop
+  deviceTypes: Record<string, number>;
   firstVisit: string;
   lastVisit: string;
-  dailyVisits: Record<string, number>; // date -> count
+  dailyVisits: Record<string, number>;
   dailyDownloads: Record<string, number>;
 }
 
@@ -51,14 +51,19 @@ function save(data: AnalyticsData) {
   localStorage.setItem(KEY, JSON.stringify(data));
 }
 
+// Only count once per browser session
 export function trackVisit() {
+  if (sessionStorage.getItem('dl_visited')) return;
+  sessionStorage.setItem('dl_visited', '1');
+
   const data = load();
   const t = today();
   data.totalVisits += 1;
   data.lastVisit = t;
   if (!data.uniqueDays.includes(t)) data.uniqueDays.push(t);
   data.dailyVisits[t] = (data.dailyVisits[t] ?? 0) + 1;
-  data.deviceTypes[getDevice()] = (data.deviceTypes[getDevice()] ?? 0) + 1;
+  const dev = getDevice();
+  data.deviceTypes[dev] = (data.deviceTypes[dev] ?? 0) + 1;
   save(data);
 }
 
@@ -68,6 +73,8 @@ export function trackSearch(query: string) {
   const q = query.toLowerCase().trim();
   data.topSearches[q] = (data.topSearches[q] ?? 0) + 1;
   save(data);
+  // Umami custom event
+  (window as any).umami?.track('search', { query: q });
 }
 
 export function trackDownload(quality: string, type: 'movie' | 'series' | 'season' | 'range') {
@@ -78,8 +85,14 @@ export function trackDownload(quality: string, type: 'movie' | 'series' | 'seaso
   data.downloadsByType[type] = (data.downloadsByType[type] ?? 0) + 1;
   data.dailyDownloads[t] = (data.dailyDownloads[t] ?? 0) + 1;
   save(data);
+  // Umami custom event
+  (window as any).umami?.track('download', { quality, type });
 }
 
 export function getAnalytics(): AnalyticsData {
   return load();
+}
+
+export function exportJSON(): string {
+  return JSON.stringify(load(), null, 2);
 }

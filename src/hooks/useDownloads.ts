@@ -30,7 +30,7 @@ async function streamDownload(
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const total = parseInt(res.headers.get('content-length') ?? '0', 10);
   const reader = res.body!.getReader();
-  const chunks: Uint8Array[] = [];
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
   let received = 0;
   while (true) {
     const { done, value } = await reader.read();

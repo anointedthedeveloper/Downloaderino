@@ -7,6 +7,8 @@ import HomePage from './pages/HomePage';
 import { MovieDetailView } from './components/MovieDetailView';
 import { TrailerModal } from './components/TrailerModal';
 import { NotFound } from './components/NotFound';
+import { AdminAnalytics } from './pages/AdminAnalytics';
+import { trackVisit, trackSearch } from './analytics';
 
 const linksCache = new Map<string, LinksResponse>();
 
@@ -26,16 +28,27 @@ const App: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [notFound, setNotFound] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  // Track visit once per session
+  useEffect(() => { trackVisit(); }, []);
+
+  // Handle /admin-analytics route on load
+  useEffect(() => {
+    if (window.location.pathname === '/admin-analytics') setShowAdmin(true);
+  }, []);
 
   // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
-      if (window.location.pathname !== '/') {
-        // Simple routing logic - if not home, show 404 or try to load if we had more complex routing
+      if (window.location.pathname === '/admin-analytics') {
+        setShowAdmin(true);
+      } else if (window.location.pathname !== '/') {
         setNotFound(true);
       } else {
         setNotFound(false);
         setSelectedMovie(null);
+        setShowAdmin(false);
       }
     };
 
@@ -48,10 +61,12 @@ const App: React.FC = () => {
     if (selectedMovie) {
       const slug = selectedMovie.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       window.history.pushState({}, '', `/${slug}`);
+    } else if (showAdmin) {
+      window.history.pushState({}, '', '/admin-analytics');
     } else if (!notFound) {
       window.history.pushState({}, '', '/');
     }
-  }, [selectedMovie, notFound]);
+  }, [selectedMovie, notFound, showAdmin]);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
@@ -60,6 +75,7 @@ const App: React.FC = () => {
   const handleSearch = async (query: string, page: number = 1) => {
     if (!query) return;
     setQuery(query);
+    trackSearch(query);
     setLoading(true);
     setNotFound(false);
     try {
@@ -145,6 +161,7 @@ const App: React.FC = () => {
 
   const handleBackToHome = () => {
     setNotFound(false);
+    setShowAdmin(false);
     setSelectedMovie(null);
     window.history.pushState({}, '', '/');
   };
@@ -162,10 +179,13 @@ const App: React.FC = () => {
           if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus(); }
         }, 50);
       }}
+      onAdminClick={() => setShowAdmin(true)}
     >
       <div className="container-custom pt-8 pb-20">
         <AnimatePresence mode="wait">
-          {notFound ? (
+          {showAdmin ? (
+            <AdminAnalytics key="admin" onBack={handleBackToHome} />
+          ) : notFound ? (
             <NotFound key="404" onBack={handleBackToHome} />
           ) : selectedMovie ? (
             <MovieDetailView
