@@ -6,9 +6,10 @@ interface StatCardProps {
   icon: LucideIcon;
   label: string;
   value: string;
+  sub?: string;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({ icon: Icon, label, value }) => {
+export const StatCard: React.FC<StatCardProps> = ({ icon: Icon, label, value, sub }) => {
   return (
     <motion.div 
       whileHover={{ y: -4 }}
@@ -19,6 +20,7 @@ export const StatCard: React.FC<StatCardProps> = ({ icon: Icon, label, value }) 
       </div>
       <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{label}</p>
       <p className="font-bold text-lg leading-none">{value}</p>
+      {sub && <p className="text-[10px] text-gray-400 font-medium mt-1">{sub}</p>}
     </motion.div>
   );
 };

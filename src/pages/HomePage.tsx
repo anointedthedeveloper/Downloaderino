@@ -21,6 +21,7 @@ interface Props {
   totalPages: number;
   totalResults: number;
   favorites: string[];
+  query: string;
   onSearch: (q: string, page?: number) => void;
   onSelectMovie: (path: string) => void;
   onToggleFav: (title: string) => void;
@@ -28,9 +29,9 @@ interface Props {
 
 const HomePage: React.FC<Props> = ({
   results, loading, currentPage, totalPages, totalResults,
-  favorites, onSearch, onSelectMovie, onToggleFav,
+  favorites, query: externalQuery, onSearch, onSelectMovie, onToggleFav,
 }) => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(externalQuery);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const scrollToResults = () => {

@@ -84,11 +84,15 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
   const [downloads, setDownloads] = useState<DownloadTask[]>([]);
   const [seasonQuality, setSeasonQuality] = useState<string>('');
   const [showSeasonModal, setShowSeasonModal] = useState(false);
+  const [showRangeModal, setShowRangeModal] = useState(false);
+  const [rangeFrom, setRangeFrom] = useState(1);
+  const [rangeTo, setRangeTo] = useState(1);
+  const [rangeQuality, setRangeQuality] = useState<string>('');
   const abortRefs = useRef<Record<string, AbortController>>({});
 
   const isMovie = movie.seasons?.[0]?.se === 0;
 
-  const currentSeason = movie.seasons.find((s, idx) => (s.se ?? s.number ?? s.season_number ?? idx + 1) === season);
+  const currentSeason = movie.seasons.find(s => s.se === season) ?? movie.seasons.find((s, idx) => (s.number ?? s.season_number ?? idx + 1) === season);
   const maxEp = currentSeason?.max_ep ?? currentSeason?.episodes_count ?? currentSeason?.episode_count ?? currentSeason?.episodes ?? 0;
   const episodeList = maxEp > 0 ? Array.from({ length: maxEp }, (_, i) => i + 1) : [];
 
@@ -100,10 +104,12 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
   const effectiveSe = isMovie ? 0 : season;
   const effectiveEp = isMovie ? 0 : episode;
 
-  // Set default season quality when resolutions available
+  // Set default qualities when resolutions available
   useEffect(() => {
-    if (seasonResolutions.length > 0 && !seasonQuality) {
-      setSeasonQuality(seasonResolutions[seasonResolutions.length - 1]);
+    if (seasonResolutions.length > 0) {
+      const best = seasonResolutions[seasonResolutions.length - 1];
+      if (!seasonQuality) setSeasonQuality(best);
+      if (!rangeQuality) setRangeQuality(best);
     }
   }, [seasonResolutions.join(',')]);
 
@@ -139,18 +145,22 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     return `${title}${epLabel}_${resolution}p.${format || 'mp4'}`;
   };
 
-  const handleInAppDownload = (resolution: string, format: string, sizeMb: string, isSeason = false) => {
-    const filename = buildFilename(resolution, format, isSeason);
-    const url = isSeason
-      ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder')
+  const handleInAppDownload = (resolution: string, format: string, sizeMb: string, isSeason = false, epFrom?: number, epTo?: number) => {
+    const filename = epFrom != null
+      ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
+      : buildFilename(resolution, format, isSeason);
+    const url = isSeason || epFrom != null
+      ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo)
       : api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
     startDownload(url, filename, sizeMb ? `${sizeMb} MB` : undefined);
   };
 
-  const handleDirectDownload = (resolution: string, format: string, isSeason = false) => {
-    const filename = buildFilename(resolution, format, isSeason);
-    const url = isSeason
-      ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder')
+  const handleDirectDownload = (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
+    const filename = epFrom != null
+      ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
+      : buildFilename(resolution, format, isSeason);
+    const url = isSeason || epFrom != null
+      ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo)
       : api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
     const a = document.createElement('a');
     a.href = url;
@@ -249,6 +259,66 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
         )}
       </AnimatePresence>
 
+      {/* Episode Range Modal */}
+      <AnimatePresence>
+        {showRangeModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowRangeModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-surface border border-border-subtle rounded-3xl p-8 w-full max-w-sm shadow-2xl space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-black flex items-center gap-2">
+                  <Film size={20} className="text-primary" /> Episode Range ZIP
+                </h3>
+                <button onClick={() => setShowRangeModal(false)} className="w-8 h-8 rounded-xl bg-background border border-border-subtle flex items-center justify-center text-gray-400 hover:text-foreground transition-colors">
+                  <X size={14} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-400 font-medium">Download a range of episodes from Season {season} as a ZIP.</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">From</label>
+                  <select value={rangeFrom} onChange={e => { const v = Number(e.target.value); setRangeFrom(v); if (rangeTo < v) setRangeTo(v); }} className="input-base h-11 font-bold text-sm bg-background w-full">
+                    {episodeList.map(ep => <option key={ep} value={ep}>Ep {ep}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">To</label>
+                  <select value={rangeTo} onChange={e => setRangeTo(Number(e.target.value))} className="input-base h-11 font-bold text-sm bg-background w-full">
+                    {episodeList.filter(ep => ep >= rangeFrom).map(ep => <option key={ep} value={ep}>Ep {ep}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Quality</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(seasonResolutions.length > 0 ? seasonResolutions : ['360', '480', '720']).map(res => (
+                    <button key={res} onClick={() => setRangeQuality(res)}
+                      className={`py-3 rounded-xl text-sm font-black border transition-all ${
+                        rangeQuality === res ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-background border-border-subtle text-gray-500 hover:border-primary hover:text-primary'
+                      }`}>{res}p</button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => { handleInAppDownload(rangeQuality, 'zip', '', false, rangeFrom, rangeTo); setShowRangeModal(false); }} disabled={!rangeQuality} className="h-12 btn btn-primary rounded-2xl font-black text-sm">
+                  <Download size={16} /> In-App
+                </button>
+                <button onClick={() => { handleDirectDownload(rangeQuality, 'zip', false, rangeFrom, rangeTo); setShowRangeModal(false); }} disabled={!rangeQuality} className="h-12 btn btn-outline rounded-2xl font-black text-sm">
+                  <ExternalLink size={16} /> Direct
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Season Quality Modal */}
       <AnimatePresence>
         {showSeasonModal && (
@@ -335,10 +405,17 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                 {isMovie ? 'Movie' : 'Series'}
               </div>
             </div>
+            {movie.imdb_rating && (
+              <div className="absolute top-4 right-4">
+                <div className="px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-sm text-yellow-400 text-[10px] font-black flex items-center gap-1 shadow-xl">
+                  <Star size={11} fill="currentColor" /> {movie.imdb_rating}
+                </div>
+              </div>
+            )}
           </motion.div>
 
           <div className="grid grid-cols-2 gap-3">
-            <StatCard icon={Star} label="IMDb" value={movie.imdb_rating ? `⭐ ${movie.imdb_rating}` : 'N/A'} />
+            <StatCard icon={Star} label="IMDb" value={movie.imdb_rating ? `⭐ ${movie.imdb_rating}` : 'N/A'} sub={movie.imdb_votes ? `${(movie.imdb_votes / 1000).toFixed(0)}K votes` : undefined} />
             <StatCard icon={Award} label="Quality" value="Ultra HD" />
           </div>
 
@@ -483,12 +560,16 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                 </button>
 
                 {!isMovie && movie.seasons.length > 0 && (
-                  <button
-                    onClick={() => setShowSeasonModal(true)}
-                    className="h-12 px-5 btn btn-outline rounded-2xl group shrink-0 text-sm"
-                  >
-                    <Package size={16} /> Full Season ZIP
-                  </button>
+                  <>
+                    <button onClick={() => setShowSeasonModal(true)} className="h-12 px-5 btn btn-outline rounded-2xl group shrink-0 text-sm">
+                      <Package size={16} /> Full Season
+                    </button>
+                    {episodeList.length > 1 && (
+                      <button onClick={() => { setRangeFrom(1); setRangeTo(Math.min(episodeList.length, 5)); setShowRangeModal(true); }} className="h-12 px-5 btn btn-outline rounded-2xl group shrink-0 text-sm">
+                        <Film size={16} /> Ep Range
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
 

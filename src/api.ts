@@ -22,10 +22,12 @@ export const api = {
     return url;
   },
 
-  getSeasonStreamUrl: (subjectId: string, detailPath: string, se: number = 1, resolution?: string, lang?: string, format: string = 'folder') => {
+  getSeasonStreamUrl: (subjectId: string, detailPath: string, se: number = 1, resolution?: string, lang?: string, format: string = 'folder', epFrom?: number, epTo?: number) => {
     let url = `${BASE_URL}/stream/season?subjectId=${subjectId}&detailPath=${encodeURIComponent(detailPath)}&se=${se}&format=${format}`;
     if (resolution) url += `&resolution=${resolution}`;
     if (lang) url += `&lang=${lang}`;
+    if (epFrom != null) url += `&epFrom=${epFrom}`;
+    if (epTo != null) url += `&epTo=${epTo}`;
     return url;
   },
 

@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [selectedMovie, setSelectedMovie] = useState<MovieDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [detailPath, setDetailPath] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const [season, setSeason] = useState(1);
   const [episode, setEpisode] = useState(1);
   const [links, setLinks] = useState<LinksResponse | null>(null);
@@ -58,6 +59,7 @@ const App: React.FC = () => {
 
   const handleSearch = async (query: string, page: number = 1) => {
     if (!query) return;
+    setQuery(query);
     setLoading(true);
     setNotFound(false);
     try {
@@ -191,6 +193,7 @@ const App: React.FC = () => {
               totalPages={totalPages}
               totalResults={totalResults}
               favorites={favorites}
+              query={query}
               onSearch={handleSearch}
               onSelectMovie={loadDetail}
               onToggleFav={toggleFavorite}

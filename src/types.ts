@@ -35,6 +35,7 @@ export interface MovieDetail {
   country: string;
   genre: string;
   imdb_rating: string;
+  imdb_votes?: number;
   trailer_url: string;
   backdrop: string;
   dubs: string[];
