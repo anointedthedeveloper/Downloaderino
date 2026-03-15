@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Heart, Menu, X, Github, Download, Search, Users, BarChart2 } from 'lucide-react';
+import { Sun, Moon, Heart, Menu, X, Github, Download, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { getAnalytics } from '../analytics';
 
 interface NavbarProps {
   isDark: boolean;
@@ -21,7 +20,6 @@ function cn(...inputs: any[]) {
 export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, onLogoClick, onSearchFocus, onAdminClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const visitorCount = getAnalytics().totalVisits;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,19 +102,6 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
           </div>
 
           <div className="h-6 w-px bg-border-subtle mx-2 hidden sm:block" />
-
-          {/* Visitor count */}
-          {visitorCount > 0 && (
-            <button
-              onClick={onAdminClick}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface border border-border-subtle text-xs font-bold text-gray-500 hover:text-primary hover:border-primary/30 transition-all"
-              title="Admin Analytics"
-            >
-              <Users size={12} className="text-primary" />
-              {visitorCount.toLocaleString()}
-              <BarChart2 size={11} className="text-gray-400" />
-            </button>
-          )}
 
           {favCount > 0 && (
             <motion.div

@@ -1,12 +1,10 @@
 import React from 'react';
 import { Github, Twitter, Heart, Youtube, Instagram, Shield, Zap, Globe, Star, Users, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getAnalytics } from '../analytics';
 
 const WA_NUMBER = '2349016471351';
 
 export const Footer: React.FC = () => {
-  const visitorCount = getAnalytics().totalVisits;
   return (
   <footer className="mt-20 border-t border-border-subtle bg-surface/30 backdrop-blur-sm">
     <div className="container-custom py-16">
