@@ -124,7 +124,7 @@ export const Footer: React.FC = () => {
               <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
                 <Users size={14} className="text-primary" />
                 <span>
-                  <span className="text-foreground font-bold">{visitorCount > 0 ? visitorCount.toLocaleString() : '—'}</span> Visitors
+                  <span className="text-foreground font-bold">40K</span> Visitors
                 </span>
               </div>
             </div>
