@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Github, Twitter, Heart, Youtube, Instagram, Shield, Zap, Globe, Star, Users } from 'lucide-react';
+import { Github, Twitter, Heart, Youtube, Instagram, Shield, Zap, Globe, Star, Users, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const WA_NUMBER = '2349016471351';
 
 function useVisitorCount() {
   const [count, setCount] = useState<number>(0);
@@ -111,6 +113,18 @@ export const Footer: React.FC = () => {
                   </button>
                 </li>
               ))}
+              <li>
+                <motion.a
+                  href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Bug report — Downloaderino: ')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ x: 4 }}
+                  className="text-sm text-green-500 hover:text-green-400 transition-colors flex items-center gap-2 group font-bold"
+                >
+                  <MessageCircle size={13} />
+                  Report a Bug
+                </motion.a>
+              </li>
             </ul>
           </div>
 

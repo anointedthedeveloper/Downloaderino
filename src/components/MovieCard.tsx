@@ -52,6 +52,11 @@ export const MovieCard: React.FC<MovieCardProps> = ({ item, isFavorite, onToggle
             {year && <span className="flex items-center gap-1"><Calendar size={9} />{year}</span>}
             {duration && <span className="flex items-center gap-1"><Clock size={9} />{duration}</span>}
             <span className="px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">{isMovie ? 'Movie' : 'Series'}</span>
+            {item.imdbRatingValue && (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-yellow-500/10 text-yellow-500">
+                <Star size={9} fill="currentColor" /> {item.imdbRatingValue}
+              </span>
+            )}
           </div>
           <p className="text-[10px] text-gray-400 font-medium line-clamp-1">{item.genre}</p>
         </div>
@@ -83,12 +88,26 @@ export const MovieCard: React.FC<MovieCardProps> = ({ item, isFavorite, onToggle
           loading="lazy"
         />
 
+        {/* IMDb rating badge — always visible */}
+        {item.imdbRatingValue && (
+          <div className="absolute bottom-3 left-3 z-10 group-hover:opacity-0 transition-opacity">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-md text-yellow-400 text-[10px] font-black border border-white/10">
+              <Star size={9} fill="currentColor" /> {item.imdbRatingValue}
+            </div>
+          </div>
+        )}
+
         {/* Overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="px-2 py-1 rounded-md bg-primary text-white text-[10px] font-black uppercase tracking-wider shadow-lg shadow-primary/40">
               {isMovie ? 'Movie' : 'Series'}
             </div>
+            {item.imdbRatingValue && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-500/20 text-yellow-400 text-[10px] font-black">
+                <Star size={9} fill="currentColor" /> {item.imdbRatingValue}
+              </div>
+            )}
           </div>
           <h3 className="text-white font-extrabold text-sm leading-tight line-clamp-2 drop-shadow-md">
             {item.title}

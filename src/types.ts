@@ -11,6 +11,8 @@ export interface MovieItem {
   subjectType?: number;
   season?: number;
   subjectId?: string;
+  imdbRatingValue?: string;
+  imdbRatingCount?: number;
 }
 
 export interface Season {

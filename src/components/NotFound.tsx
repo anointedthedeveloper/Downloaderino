@@ -1,10 +1,12 @@
 import React from 'react';
-import { AlertCircle, Home, MoveLeft } from 'lucide-react';
+import { AlertCircle, Home, MoveLeft, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface NotFoundProps {
   onBack: () => void;
 }
+
+const WA_NUMBER = '2349016471351';
 
 export const NotFound: React.FC<NotFoundProps> = ({ onBack }) => {
   return (
@@ -60,6 +62,18 @@ export const NotFound: React.FC<NotFoundProps> = ({ onBack }) => {
           <MoveLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
           Go Back
         </motion.button>
+
+        <motion.a
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Bug report — Downloaderino 404: ')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-outline px-10 py-4 text-base rounded-2xl group border-green-500/40 text-green-500 hover:bg-green-500/10"
+        >
+          <MessageCircle size={20} />
+          Report Bug
+        </motion.a>
       </div>
     </motion.div>
   );
