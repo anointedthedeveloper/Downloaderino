@@ -47,3 +47,14 @@ export interface LinksResponse {
   downloads: DownloadLink[];
   captions: Caption[];
 }
+
+export interface Pager {
+  current: number;
+  pages: number;
+  total: number;
+}
+
+export interface SearchResponse {
+  items: MovieItem[];
+  pager: Pager;
+}

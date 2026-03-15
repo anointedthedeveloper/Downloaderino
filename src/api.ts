@@ -27,5 +27,9 @@ export const api = {
     if (resolution) url += `&resolution=${resolution}`;
     if (lang) url += `&lang=${lang}`;
     return url;
+  },
+
+  getSubtitleUrl: (subjectId: string, detailPath: string, se: number = 1, ep: number = 1, lang: string = 'en') => {
+    return `${BASE_URL}/stream?subjectId=${subjectId}&detailPath=${encodeURIComponent(detailPath)}&se=${se}&ep=${ep}&type=caption&lang=${lang}`;
   }
 };

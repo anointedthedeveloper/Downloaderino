@@ -1,0 +1,100 @@
+import React from 'react';
+import { Github, Twitter, Heart, Youtube, Instagram, Mail, Shield, Zap, Globe } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+export const Footer: React.FC = () => (
+  <footer className="mt-20 border-t border-border-subtle bg-surface/30 backdrop-blur-sm">
+    <div className="container-custom py-16">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
+        {/* Brand Section */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-primary/20">
+              D
+            </div>
+            <span className="font-extrabold tracking-tighter text-2xl">
+              DOWNLOADERINO
+            </span>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm">
+            The world's most advanced movie downloader platform. Experience lightning-fast speeds, premium content, and a clean interface.
+          </p>
+          <div className="flex items-center gap-4">
+            {[Twitter, Github, Youtube, Instagram].map((Icon, i) => (
+              <motion.a
+                key={i}
+                href="#"
+                whileHover={{ y: -4, scale: 1.1 }}
+                className="w-10 h-10 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
+              >
+                <Icon size={18} />
+              </motion.a>
+            ))}
+          </div>
+        </div>
+
+        {/* Links Sections */}
+        <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8">
+          <div className="space-y-6">
+            <h4 className="font-bold text-xs uppercase tracking-[0.2em] text-primary">Platform</h4>
+            <ul className="space-y-4">
+              {['Movies', 'Series', 'Trending', 'New Releases'].map((item) => (
+                <li key={item}>
+                  <button className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary transition-colors flex items-center gap-2 group">
+                    <div className="w-1 h-1 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {item}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          <div className="space-y-6">
+            <h4 className="font-bold text-xs uppercase tracking-[0.2em] text-primary">Company</h4>
+            <ul className="space-y-4">
+              {['About Us', 'Contact', 'Terms', 'Privacy'].map((item) => (
+                <li key={item}>
+                  <button className="text-sm text-gray-500 dark:text-gray-400 hover:text-primary transition-colors flex items-center gap-2 group">
+                    <div className="w-1 h-1 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {item}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="space-y-6 hidden sm:block">
+            <h4 className="font-bold text-xs uppercase tracking-[0.2em] text-primary">Stats</h4>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                <Zap size={14} className="text-primary" />
+                <span>10GB/s Speed</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                <Shield size={14} className="text-primary" />
+                <span>Secure SSL</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                <Globe size={14} className="text-primary" />
+                <span>Global Nodes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-16 pt-8 border-t border-border-subtle flex flex-col sm:flex-row items-center justify-between gap-6 text-xs font-medium text-gray-500">
+        <div className="flex flex-wrap justify-center gap-6">
+          <p>© 2026 Downloaderino. Built for the web.</p>
+          <div className="flex items-center gap-6">
+            <button className="hover:text-primary transition-colors">English (US)</button>
+            <button className="hover:text-primary transition-colors">System Status</button>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-surface border border-border-subtle">
+          Made with <Heart size={12} className="text-red-500 fill-red-500" /> by <span className="text-foreground font-bold"></span>
+        </div>
+      </div>
+    </div>
+  </footer>
+);
