@@ -86,9 +86,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
   const [showSeasonModal, setShowSeasonModal] = useState(false);
   const abortRefs = useRef<Record<string, AbortController>>({});
 
-  const isMovie = movie.subject_type === 1 || movie.seasons.length === 0 ||
-    (movie.seasons.length === 1 &&
-      (movie.seasons[0].max_ep ?? movie.seasons[0].episodes_count ?? movie.seasons[0].episode_count ?? movie.seasons[0].episodes ?? 0) <= 1);
+  const isMovie = movie.seasons?.[0]?.se === 0;
 
   const currentSeason = movie.seasons.find((s, idx) => (s.se ?? s.number ?? s.season_number ?? idx + 1) === season);
   const maxEp = currentSeason?.max_ep ?? currentSeason?.episodes_count ?? currentSeason?.episode_count ?? currentSeason?.episodes ?? 0;
@@ -99,12 +97,8 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     ? currentSeason.resolutions.map(String)
     : links?.downloads?.map(d => String(d.resolution)) ?? ['360', '480', '720'];
 
-  const effectiveSe = isMovie ? 1 : season;
-  const effectiveEp = isMovie ? 1 : episode;
-
-  useEffect(() => {
-    if (isMovie) { setSeason(1); setEpisode(1); }
-  }, [isMovie]);
+  const effectiveSe = isMovie ? 0 : season;
+  const effectiveEp = isMovie ? 0 : episode;
 
   // Set default season quality when resolutions available
   useEffect(() => {
