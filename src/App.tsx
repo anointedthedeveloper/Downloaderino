@@ -62,7 +62,14 @@ const App: React.FC = () => {
     setNotFound(false);
     try {
       const response = await api.search(query, page);
-      const items = response.data.items || [];
+      const rawItems = response.data.items || [];
+      // Deduplicate by detailPath
+      const seen = new Set<string>();
+      const items = rawItems.filter((item: MovieItem) => {
+        if (seen.has(item.detailPath)) return false;
+        seen.add(item.detailPath);
+        return true;
+      });
       setResults(items);
       setTotalPages(response.data.pager?.pages || 1);
       const total =
@@ -103,14 +110,18 @@ const App: React.FC = () => {
 
   const loadLinks = async () => {
     if (!selectedMovie || !detailPath) return;
-    const cacheKey = `${selectedMovie.subject_id}:${detailPath}:${season}:${episode}`;
+    const isMovie = selectedMovie.subject_type === 1 || selectedMovie.seasons.length === 0 ||
+      (selectedMovie.seasons.length === 1 && (selectedMovie.seasons[0].max_ep ?? selectedMovie.seasons[0].episodes_count ?? 0) <= 1);
+    const effectiveSe = isMovie ? 1 : season;
+    const effectiveEp = isMovie ? 1 : episode;
+    const cacheKey = `${selectedMovie.subject_id}:${detailPath}:${effectiveSe}:${effectiveEp}`;
     if (linksCache.has(cacheKey)) {
       setLinks(linksCache.get(cacheKey)!);
       return;
     }
     setLoading(true);
     try {
-      const response = await api.getLinks(selectedMovie.subject_id, detailPath, season, episode);
+      const response = await api.getLinks(selectedMovie.subject_id, detailPath, effectiveSe, effectiveEp);
       linksCache.set(cacheKey, response.data);
       setLinks(response.data);
     } catch (error) {

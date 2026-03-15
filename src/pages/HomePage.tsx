@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, PlayCircle, Star, ShieldCheck } from 'lucide-react';
+import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, PlayCircle, Star, ShieldCheck, LayoutGrid, List } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { MovieItem } from '../types';
 import Pagination from '../components/Pagination';
@@ -31,15 +31,24 @@ const HomePage: React.FC<Props> = ({
   favorites, onSearch, onSelectMovie, onToggleFav,
 }) => {
   const [query, setQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const scrollToResults = () => {
+    setTimeout(() => {
+      const el = document.getElementById('results-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  };
 
   const submit = (e: React.FormEvent, page = 1) => {
     e.preventDefault();
-    if (query.trim()) onSearch(query, page);
+    if (query.trim()) { onSearch(query, page); scrollToResults(); }
   };
 
   const quickSearch = (term: string) => {
     setQuery(term);
     onSearch(term, 1);
+    scrollToResults();
   };
 
   const hasResults = results.length > 0;
@@ -56,10 +65,10 @@ const HomePage: React.FC<Props> = ({
               animate={{ opacity: 1, scale: 1 }}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/5"
             >
-              <Sparkles size={14} className="animate-pulse" /> 
+              <Sparkles size={14} className="animate-pulse" />
               <span>Premium Media Hub v2.0</span>
             </motion.div>
-  
+
             {/* Headline */}
             <div className="space-y-4">
               <motion.h1
@@ -80,7 +89,7 @@ const HomePage: React.FC<Props> = ({
                 Time to download-diddly that file-erino.
               </motion.p>
             </div>
-  
+
             {/* Search Bar */}
             <motion.form
               initial={{ opacity: 0, y: 30 }}
@@ -93,7 +102,7 @@ const HomePage: React.FC<Props> = ({
                 <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity" />
                 <div className="relative flex items-center p-1.5 bg-surface border border-border-subtle rounded-2xl shadow-2xl focus-within:border-primary transition-all">
                   <div className="flex-grow flex items-center px-4">
-                    <Search className="text-gray-400 group-focus-within:text-primary transition-colors" size={20} />
+                    <Search className="text-gray-400 group-focus-within:text-primary transition-colors shrink-0" size={20} />
                     <input
                       id="hero-search"
                       type="text"
@@ -105,14 +114,17 @@ const HomePage: React.FC<Props> = ({
                   </div>
                   <button
                     type="submit"
-                    className="btn btn-primary h-12 px-8 rounded-xl text-sm font-bold shadow-lg shadow-primary/20"
+                    disabled={loading}
+                    className="btn btn-primary h-12 px-8 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 shrink-0"
                   >
-                    Explore
+                    {loading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : 'Explore'}
                   </button>
                 </div>
               </div>
             </motion.form>
-  
+
             {/* Trending */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -136,7 +148,7 @@ const HomePage: React.FC<Props> = ({
                 ))}
               </div>
             </motion.div>
-  
+
             {/* Features Grid */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -159,24 +171,43 @@ const HomePage: React.FC<Props> = ({
       </section>
 
       {/* Results Section */}
-      <section className="container-custom">
-        {loading && <Spinner />}
+      <section id="results-section" className="container-custom">
+        {/* Loading state */}
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-8"
+          >
+            <Spinner />
+            {/* Skeleton grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="aspect-[2/3] rounded-xl bg-surface border border-border-subtle" />
+                  <div className="mt-3 space-y-2 px-1">
+                    <div className="h-3 bg-surface rounded-full w-3/4" />
+                    <div className="h-2 bg-surface rounded-full w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {!loading && hasResults && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-10"
+            className="space-y-8"
           >
-            <div className="flex flex-col sm:flex-row items-end justify-between gap-6">
-              <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2 text-primary font-black uppercase tracking-[0.2em] text-[10px]">
-                   <Layers size={14} />
-                   <span>Catalogue</span>
+                  <Layers size={14} />
+                  <span>Catalogue</span>
                 </div>
-                <h2 className="text-4xl font-black tracking-tight">
-                  Search Results
-                </h2>
+                <h2 className="text-3xl font-black tracking-tight">Search Results</h2>
                 <p className="text-sm font-medium text-gray-400">
                   Showing{' '}
                   <span className="text-foreground font-bold">{results.length}</span>{' '}
@@ -185,34 +216,83 @@ const HomePage: React.FC<Props> = ({
                   titles found.
                 </p>
               </div>
-              
-              <div className="flex items-center gap-2 p-1 bg-surface border border-border-subtle rounded-xl">
-                 <button className="px-4 py-2 rounded-lg bg-background border border-border-subtle text-xs font-bold shadow-sm">Grid View</button>
-                 <button className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-foreground transition-colors">List View</button>
+
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 p-1 bg-surface border border-border-subtle rounded-xl shrink-0">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                    viewMode === 'grid'
+                      ? 'bg-background border border-border-subtle shadow-sm text-foreground'
+                      : 'text-gray-500 hover:text-foreground'
+                  }`}
+                >
+                  <LayoutGrid size={14} /> Grid
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                    viewMode === 'list'
+                      ? 'bg-background border border-border-subtle shadow-sm text-foreground'
+                      : 'text-gray-500 hover:text-foreground'
+                  }`}
+                >
+                  <List size={14} /> List
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10">
-              {results.map((item, idx) => (
-                <MovieCard
-                  key={idx}
-                  item={item}
-                  isFavorite={favorites.includes(item.title)}
-                  onToggleFavorite={onToggleFav}
-                  onClick={() => onSelectMovie(item.detailPath)}
-                />
-              ))}
-            </div>
+            <AnimatePresence mode="wait">
+              {viewMode === 'grid' ? (
+                <motion.div
+                  key="grid"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-5 gap-y-8"
+                >
+                  {results.map((item, idx) => (
+                    <MovieCard
+                      key={item.detailPath + idx}
+                      item={item}
+                      isFavorite={favorites.includes(item.title)}
+                      onToggleFavorite={onToggleFav}
+                      onClick={() => onSelectMovie(item.detailPath)}
+                      viewMode="grid"
+                    />
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="list"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col gap-3"
+                >
+                  {results.map((item, idx) => (
+                    <MovieCard
+                      key={item.detailPath + idx}
+                      item={item}
+                      isFavorite={favorites.includes(item.title)}
+                      onToggleFavorite={onToggleFav}
+                      onClick={() => onSelectMovie(item.detailPath)}
+                      viewMode="list"
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <Pagination 
-              current={currentPage} 
-              total={totalPages} 
-              onChange={p => onSearch(query, p)} 
+            <Pagination
+              current={currentPage}
+              total={totalPages}
+              onChange={p => { onSearch(query, p); scrollToResults(); }}
             />
           </motion.div>
         )}
 
-        {/* Empty State / Welcome Screen */}
+        {/* Empty State */}
         <AnimatePresence>
           {!loading && !hasResults && (
             <motion.div
@@ -221,20 +301,18 @@ const HomePage: React.FC<Props> = ({
               className="py-12"
             >
               <div className="max-w-5xl mx-auto rounded-[32px] overflow-hidden bg-surface border border-border-subtle shadow-2xl relative">
-                {/* Decorative Pattern */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-                
                 <div className="relative p-8 md:p-16 flex flex-col md:flex-row items-center gap-12">
                   <div className="flex-grow space-y-6 text-center md:text-left">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
-                      <Star size={12} fill="currentColor" /> Feature Update
+                      <Star size={12} fill="currentColor" /> Ready to Search
                     </div>
-                    <h3 className="text-3xl md:text-5xl font-black leading-[1.1]">No content to show yet.</h3>
+                    <h3 className="text-3xl md:text-5xl font-black leading-[1.1]">Your next binge<br />starts here.</h3>
                     <p className="text-gray-500 dark:text-gray-400 font-medium max-w-md text-lg leading-relaxed">
                       Search for your favorite movie or series title in the bar above. Our high-speed indexer will find the best links for you.
                     </p>
                     <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                      <div className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border-subtle shadow-sm group hover:border-primary/30 transition-all">
+                      <div className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border-subtle shadow-sm hover:border-primary/30 transition-all">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                           <PlayCircle size={24} />
                         </div>
@@ -243,7 +321,7 @@ const HomePage: React.FC<Props> = ({
                           <p className="text-sm font-bold">100k+ Titles</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border-subtle shadow-sm group hover:border-primary/30 transition-all">
+                      <div className="flex items-center gap-3 p-4 rounded-2xl bg-background border border-border-subtle shadow-sm hover:border-primary/30 transition-all">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                           <Zap size={24} />
                         </div>
@@ -254,15 +332,15 @@ const HomePage: React.FC<Props> = ({
                       </div>
                     </div>
                   </div>
-                  <div className="w-64 h-64 md:w-80 md:h-80 relative flex-shrink-0">
+                  <div className="w-56 h-56 md:w-72 md:h-72 relative flex-shrink-0">
                     <div className="absolute inset-0 bg-primary/20 blur-[60px] rounded-full animate-pulse" />
                     <div className="relative w-full h-full bg-surface border border-border-subtle rounded-3xl overflow-hidden shadow-2xl rotate-3 flex items-center justify-center">
-                       <Film size={120} className="text-primary opacity-20" />
-                       <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-20 h-20 bg-primary text-white rounded-2xl flex items-center justify-center shadow-xl">
-                             <PlayCircle size={40} fill="currentColor" strokeWidth={0} />
-                          </div>
-                       </div>
+                      <Film size={100} className="text-primary opacity-20" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center shadow-xl">
+                          <PlayCircle size={32} fill="currentColor" strokeWidth={0} />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

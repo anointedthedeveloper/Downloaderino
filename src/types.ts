@@ -6,6 +6,11 @@ export interface MovieItem {
   trailer?: string;
   detailPath: string;
   title: string;
+  duration?: number;
+  releaseDate?: string;
+  subjectType?: number;
+  season?: number;
+  subjectId?: string;
 }
 
 export interface Season {
@@ -16,12 +21,15 @@ export interface Season {
   episodes_count?: number;
   episode_count?: number;
   episodes?: number;
+  max_ep?: number;
+  resolutions?: number[];
 }
 
 export interface MovieDetail {
   title: string;
   description: string;
   subject_id: string;
+  subject_type?: number;
   cover: string;
   release_date: string;
   country: string;
@@ -31,6 +39,7 @@ export interface MovieDetail {
   backdrop: string;
   dubs: string[];
   seasons: Season[];
+  duration?: number;
 }
 
 export interface DownloadLink {

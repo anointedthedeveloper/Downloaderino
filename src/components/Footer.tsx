@@ -5,15 +5,20 @@ import { motion } from 'framer-motion';
 function useVisitorCount() {
   const [count, setCount] = useState<number>(0);
   useEffect(() => {
-    const SEED = 47382;
-    const stored = localStorage.getItem('dl_visitor_count');
-    let current = stored ? parseInt(stored, 10) : SEED + Math.floor(Math.random() * 3000);
-    const lastVisit = localStorage.getItem('dl_last_visit');
+    const SEED = 52_841; // base count
+    const stored = localStorage.getItem('dl_vc');
+    const lastVisit = localStorage.getItem('dl_lv');
     const today = new Date().toDateString();
+    let current = stored ? parseInt(stored, 10) : SEED + Math.floor(Math.random() * 5000);
+    if (!stored) {
+      // First ever visit on this browser — initialise
+      localStorage.setItem('dl_vc', String(current));
+    }
     if (lastVisit !== today) {
+      // New day = new visit
       current += 1;
-      localStorage.setItem('dl_visitor_count', String(current));
-      localStorage.setItem('dl_last_visit', today);
+      localStorage.setItem('dl_vc', String(current));
+      localStorage.setItem('dl_lv', today);
     }
     setCount(current);
   }, []);

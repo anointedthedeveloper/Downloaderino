@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Heart, Menu, X, Github, Download, Search } from 'lucide-react';
+import { Sun, Moon, Heart, Menu, X, Github, Download, Search, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -16,9 +16,29 @@ function cn(...inputs: any[]) {
   return twMerge(clsx(inputs));
 }
 
+function useVisitorCount() {
+  const [count, setCount] = useState<number>(0);
+  useEffect(() => {
+    const SEED = 52_841;
+    const stored = localStorage.getItem('dl_vc');
+    const lastVisit = localStorage.getItem('dl_lv');
+    const today = new Date().toDateString();
+    let current = stored ? parseInt(stored, 10) : SEED + Math.floor(Math.random() * 5000);
+    if (!stored) localStorage.setItem('dl_vc', String(current));
+    if (lastVisit !== today) {
+      current += 1;
+      localStorage.setItem('dl_vc', String(current));
+      localStorage.setItem('dl_lv', today);
+    }
+    setCount(current);
+  }, []);
+  return count;
+}
+
 export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, onLogoClick, onSearchFocus }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const visitorCount = useVisitorCount();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -101,6 +121,14 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
           </div>
 
           <div className="h-6 w-px bg-border-subtle mx-2 hidden sm:block" />
+
+          {/* Visitor count */}
+          {visitorCount > 0 && (
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface border border-border-subtle text-xs font-bold text-gray-500">
+              <Users size={12} className="text-primary" />
+              {visitorCount.toLocaleString()}
+            </div>
+          )}
 
           {favCount > 0 && (
             <motion.div
