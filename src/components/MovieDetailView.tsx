@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   ArrowLeft, Star, Play, Heart, Download,
-  Layers, Film, Calendar, Globe, Award, ExternalLink, ShieldCheck, Zap, Clock, X, Package
+  Layers, Film, Calendar, Globe, Award, ExternalLink, ShieldCheck, Zap, Clock, X, Package, WifiOff
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { MovieDetail, LinksResponse } from '../types';
@@ -29,8 +29,9 @@ interface DownloadTask {
   name: string;
   url: string;
   progress: number;
-  status: 'downloading' | 'done' | 'error';
+  status: 'downloading' | 'done' | 'error' | 'bg';
   size?: string;
+  background?: boolean;
 }
 
 function formatDuration(seconds: number): string {
@@ -58,7 +59,7 @@ async function downloadWithProgress(
   const contentLength = res.headers.get('content-length');
   const total = contentLength ? parseInt(contentLength, 10) : 0;
   const reader = res.body!.getReader();
-  const chunks: Uint8Array[] = [];
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
   let received = 0;
   while (true) {
     const { done, value } = await reader.read();
@@ -137,21 +138,37 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     setDownloads(prev => prev.filter(d => d.id !== id));
   };
 
-  const handleLinkDownload = (link: { resolution: string; format: string; size_mb: string; url: string }) => {
+  const buildFilename = (resolution: string, format = 'mp4', isSeason = false) => {
     const title = movie.title.replace(/[^a-z0-9]/gi, '_');
+    if (isSeason) return `${title}_S${String(season).padStart(2,'0')}_${resolution}p.zip`;
     const epLabel = isMovie ? '' : `_S${String(effectiveSe).padStart(2,'0')}E${String(effectiveEp).padStart(2,'0')}`;
-    const filename = `${title}${epLabel}_${link.resolution}p.${link.format || 'mp4'}`;
-    const streamUrl = api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, String(link.resolution));
-    startDownload(streamUrl, filename, link.size_mb ? `${link.size_mb} MB` : undefined);
+    return `${title}${epLabel}_${resolution}p.${format || 'mp4'}`;
   };
 
-  const handleSeasonDownload = () => {
-    const title = movie.title.replace(/[^a-z0-9]/gi, '_');
-    const filename = `${title}_S${String(season).padStart(2,'0')}_${seasonQuality}p.zip`;
-    const url = api.getSeasonStreamUrl(movie.subject_id, detailPath, season, seasonQuality, 'en', 'folder');
-    startDownload(url, filename);
-    setShowSeasonModal(false);
+  const handleInAppDownload = (resolution: string, format: string, sizeMb: string, isSeason = false) => {
+    const filename = buildFilename(resolution, format, isSeason);
+    const url = isSeason
+      ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder')
+      : api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
+    startDownload(url, filename, sizeMb ? `${sizeMb} MB` : undefined);
   };
+
+  const handleDirectDownload = (resolution: string, format: string, isSeason = false) => {
+    const filename = buildFilename(resolution, format, isSeason);
+    const url = isSeason
+      ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder')
+      : api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+  };
+
+  const sendToBackground = (id: string) => {
+    setDownloads(prev => prev.map(d => d.id === id ? { ...d, background: true } : d));
+  };
+
+
 
   return (
     <motion.div
@@ -193,15 +210,27 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                     <p className="text-[10px] text-gray-400 font-medium mt-0.5">
                       {task.status === 'done' ? '✓ Complete' :
                        task.status === 'error' ? '✗ Failed' :
+                       task.background ? `⬇ Background · ${task.progress > 0 ? task.progress + '%' : '…'}` :
                        task.size ? `${task.size} · ${task.progress}%` : `Downloading… ${task.progress > 0 ? task.progress + '%' : ''}`}
                     </p>
                   </div>
-                  <button
-                    onClick={() => cancelDownload(task.id)}
-                    className="shrink-0 w-6 h-6 rounded-lg bg-background border border-border-subtle flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    <X size={12} />
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {task.status === 'downloading' && !task.background && (
+                      <button
+                        onClick={() => sendToBackground(task.id)}
+                        title="Send to background"
+                        className="w-6 h-6 rounded-lg bg-background border border-border-subtle flex items-center justify-center text-gray-400 hover:text-primary transition-colors"
+                      >
+                        <WifiOff size={11} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => cancelDownload(task.id)}
+                      className="w-6 h-6 rounded-lg bg-background border border-border-subtle flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
                 </div>
                 <div className="w-full h-1.5 bg-background rounded-full overflow-hidden">
                   <motion.div
@@ -272,13 +301,22 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                   ))}
                 </div>
               </div>
-              <button
-                onClick={handleSeasonDownload}
-                disabled={!seasonQuality}
-                className="w-full h-12 btn btn-primary rounded-2xl font-black text-base"
-              >
-                <Download size={18} /> Download Season {season} · {seasonQuality}p
-              </button>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => { handleInAppDownload(seasonQuality, 'zip', '', true); setShowSeasonModal(false); }}
+                  disabled={!seasonQuality}
+                  className="h-12 btn btn-primary rounded-2xl font-black text-sm"
+                >
+                  <Download size={16} /> In-App
+                </button>
+                <button
+                  onClick={() => { handleDirectDownload(seasonQuality, 'zip', true); setShowSeasonModal(false); }}
+                  disabled={!seasonQuality}
+                  className="h-12 btn btn-outline rounded-2xl font-black text-sm"
+                >
+                  <ExternalLink size={16} /> Direct
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -379,7 +417,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                   <h3 className="text-xl font-black tracking-tight flex items-center gap-2">
                     <Download size={24} className="text-primary" /> Download Center
                   </h3>
-                  <p className="text-xs font-medium text-gray-400">Select quality and download directly in-app with progress tracking.</p>
+                  <p className="text-xs font-medium text-gray-400">Choose In-App (with progress) or Direct (browser native) download per quality.</p>
                 </div>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-widest border border-green-500/20 shrink-0">
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
@@ -472,62 +510,55 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                     <div className="flex items-center gap-2">
                       <ShieldCheck size={14} className="text-primary" />
                       <h4 className="font-black text-[10px] uppercase tracking-widest text-gray-400">
-                        Available Qualities — click to download in-app
+                        Available Qualities
                       </h4>
                     </div>
-                    <div className="grid gap-2.5">
+                    <div className="grid gap-3">
                       {links.downloads.map((link, idx) => {
-                        const isActive = downloads.some(d => d.name.includes(`_${link.resolution}p`) && d.status === 'downloading');
+                        const activeTask = downloads.find(d => d.name === buildFilename(String(link.resolution), link.format) && d.status === 'downloading');
                         return (
-                          <motion.button
+                          <motion.div
                             key={idx}
-                            onClick={() => handleLinkDownload(link)}
-                            disabled={isActive}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: idx * 0.07 }}
-                            className="flex items-center justify-between p-4 bg-background border border-border-subtle rounded-2xl hover:border-primary/50 transition-all group hover:shadow-md active:scale-[0.99] disabled:opacity-60 text-left w-full"
+                            className="bg-background border border-border-subtle rounded-2xl overflow-hidden"
                           >
-                            <div className="flex items-center gap-4">
-                              <div className="w-11 h-11 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-primary font-black text-xs shadow-sm group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
+                            {/* Header row */}
+                            <div className="flex items-center gap-4 px-4 pt-4 pb-3">
+                              <div className="w-11 h-11 rounded-xl bg-surface border border-border-subtle flex items-center justify-center text-primary font-black text-xs shadow-sm shrink-0">
                                 {link.resolution || '?'}p
                               </div>
-                              <div>
-                                <p className="font-bold text-foreground group-hover:text-primary transition-colors text-sm">
+                              <div className="flex-grow min-w-0">
+                                <p className="font-bold text-foreground text-sm">
                                   {link.resolution}p — {(link.format || 'mp4').toUpperCase()}
                                 </p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                                    {link.size_mb ? `${link.size_mb} MB` : 'Size N/A'}
-                                  </span>
-                                  <div className="w-1 h-1 rounded-full bg-gray-300" />
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">
-                                    {isActive ? 'Downloading…' : 'In-App Download'}
-                                  </span>
-                                </div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-0.5">
+                                  {link.size_mb ? `${link.size_mb} MB` : 'Size N/A'}
+                                </p>
                               </div>
                             </div>
-                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-gray-300 group-hover:text-primary group-hover:bg-primary/10 transition-all shrink-0">
-                              {isActive
-                                ? <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                : <Download size={16} />
-                              }
+                            {/* Action buttons */}
+                            <div className="grid grid-cols-2 gap-px bg-border-subtle">
+                              <button
+                                onClick={() => handleInAppDownload(String(link.resolution), link.format, link.size_mb)}
+                                disabled={!!activeTask}
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-background hover:bg-primary/5 text-xs font-black text-primary transition-colors disabled:opacity-50"
+                              >
+                                {activeTask
+                                  ? <><div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" /> Downloading…</>
+                                  : <><Download size={13} /> In-App</>}
+                              </button>
+                              <button
+                                onClick={() => handleDirectDownload(String(link.resolution), link.format)}
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-background hover:bg-surface text-xs font-black text-gray-400 hover:text-foreground transition-colors border-l border-border-subtle"
+                              >
+                                <ExternalLink size={13} /> Direct
+                              </button>
                             </div>
-                          </motion.button>
+                          </motion.div>
                         );
                       })}
-                    </div>
-
-                    {/* Also offer direct stream link */}
-                    <div className="pt-1">
-                      <a
-                        href={api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-xs text-gray-400 hover:text-primary transition-colors font-bold"
-                      >
-                        <ExternalLink size={12} /> Open direct stream link instead
-                      </a>
                     </div>
                   </motion.div>
                 )}
