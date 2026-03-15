@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface StatCardProps {
@@ -11,7 +11,7 @@ interface StatCardProps {
 export const StatCard: React.FC<StatCardProps> = ({ icon: Icon, label, value }) => {
   return (
     <motion.div 
-      whileHover={{ y: -4, shadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
+      whileHover={{ y: -4 }}
       className="bg-surface border border-border-subtle rounded-2xl p-5 hover:border-primary/30 transition-all shadow-sm group"
     >
       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">

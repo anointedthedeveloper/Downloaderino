@@ -1,7 +1,7 @@
 import React from 'react';
-import { Film, Heart, Star, Play, Clock } from 'lucide-react';
+import { Film, Heart, Star, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { MovieItem } from '../types';
+import type { MovieItem } from '../types';
 
 interface MovieCardProps {
   item: MovieItem;

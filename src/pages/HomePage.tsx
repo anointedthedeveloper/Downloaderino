@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, PlayCircle, Star, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MovieItem } from '../types';
+import type { MovieItem } from '../types';
 import Pagination from '../components/Pagination';
 import { MovieCard } from '../components/MovieCard';
 import { Spinner } from '../components/Spinner';
@@ -125,7 +125,7 @@ const HomePage: React.FC<Props> = ({
                 <span>Trending:</span>
               </div>
               <div className="flex flex-wrap justify-center gap-2">
-                {TRENDING.map((t, i) => (
+                {TRENDING.map((t) => (
                   <button
                     key={t}
                     onClick={() => quickSearch(t)}

@@ -1,10 +1,10 @@
 import React from 'react';
 import { 
-  ArrowLeft, Star, Clock, Play, Heart, Download, 
+  ArrowLeft, Star, Play, Heart, Download, 
   Layers, Film, Calendar, Globe, Award, ExternalLink, ShieldCheck, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MovieDetail, LinksResponse } from '../types';
+import type { MovieDetail, LinksResponse } from '../types';
 import { StatCard } from './StatCard';
 import { api } from '../api';
 

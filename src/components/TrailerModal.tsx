@@ -1,6 +1,6 @@
 import React from 'react';
-import { X, Play, Youtube, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { X, Youtube, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface TrailerModalProps {
   url: string;

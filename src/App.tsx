@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { api } from './api';
-import { MovieItem, MovieDetail, LinksResponse } from './types';
+import type { MovieItem, MovieDetail, LinksResponse } from './types';
 import { Layout } from './components/Layout';
 import HomePage from './pages/HomePage';
 import { MovieDetailView } from './components/MovieDetailView';
