@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { MovieDetail, LinksResponse } from '../types';
 import { StatCard } from './StatCard';
 import { api } from '../api';
+import { Seo, buildMovieJsonLd, buildBreadcrumbJsonLd } from './Seo';
 
 interface MovieDetailViewProps {
   movie: MovieDetail;
@@ -115,6 +116,14 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
 
   const duration = formatDuration(movie.duration ?? 0);
   const year = getYear(movie.release_date);
+  const slug = movie.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const seoTitle = `Download ${movie.title}${year ? ` (${year})` : ''} ${isMovie ? 'Full Movie' : 'All Seasons'} HD`;
+  const seoDesc = `Download ${movie.title}${year ? ` (${year})` : ''} in HD quality. Free ${isMovie ? 'movie' : 'series'} download with multiple resolutions. Fast servers, in-app progress tracking.`;
+  const movieJsonLd = buildMovieJsonLd(movie);
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: 'Home', url: '/' },
+    { name: movie.title, url: `/${slug}` },
+  ]);
 
   const startDownload = async (url: string, filename: string, size?: string) => {
     const id = Date.now().toString();
@@ -181,6 +190,14 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
       exit={{ opacity: 0, y: 20 }}
       className="space-y-8 pb-20"
     >
+      <Seo
+        title={seoTitle}
+        description={seoDesc}
+        image={movie.cover}
+        url={`/${slug}`}
+        type={movie.subject_type === 2 ? 'video.tv_show' : 'video.movie'}
+        jsonLd={[movieJsonLd, breadcrumbJsonLd]}
+      />
       {/* Back Button */}
       <motion.button
         whileHover={{ x: -5 }}

@@ -5,6 +5,7 @@ import type { MovieItem } from '../types';
 import Pagination from '../components/Pagination';
 import { MovieCard } from '../components/MovieCard';
 import { Spinner } from '../components/Spinner';
+import { Seo } from '../components/Seo';
 
 const TRENDING = ['Inception', 'The Matrix', 'Interstellar', 'Dune', 'Oppenheimer', 'Breaking Bad'];
 const FEATURES = [
@@ -53,9 +54,16 @@ const HomePage: React.FC<Props> = ({
   };
 
   const hasResults = results.length > 0;
+  const seoTitle = externalQuery
+    ? `Download "${externalQuery}" — Search Results`
+    : undefined;
+  const seoDesc = externalQuery
+    ? `Search results for "${externalQuery}". Download HD movies and series free on Downloaderino.`
+    : undefined;
 
   return (
     <div className="space-y-20 pb-20 overflow-hidden">
+      <Seo title={seoTitle} description={seoDesc} />
       {/* Hero Section */}
       <section className="relative pt-12 pb-24 md:pt-24 md:pb-32">
         <div className="container-custom relative z-10">
