@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, PlayCircle, Star, ShieldCheck, LayoutGrid, List } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, PlayCircle, Star, ShieldCheck, LayoutGrid, List, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { MovieItem } from '../types';
 import Pagination from '../components/Pagination';
@@ -34,6 +34,20 @@ const HomePage: React.FC<Props> = ({
 }) => {
   const [query, setQuery] = useState(externalQuery);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Search while typing — 400 ms debounce
+  const handleQueryChange = (val: string) => {
+    setQuery(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (val.trim().length < 2) return;
+    debounceRef.current = setTimeout(() => {
+      onSearch(val, 1);
+      scrollToResults();
+    }, 400);
+  };
+
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
   const scrollToResults = () => {
     setTimeout(() => {
@@ -116,10 +130,15 @@ const HomePage: React.FC<Props> = ({
                       id="hero-search"
                       type="text"
                       value={query}
-                      onChange={e => setQuery(e.target.value)}
+                      onChange={e => handleQueryChange(e.target.value)}
                       placeholder="Search for movies, TV shows, anime..."
                       className="w-full bg-transparent py-4 pl-3 pr-4 text-base md:text-lg font-semibold outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
                     />
+                    {query && (
+                      <button type="button" onClick={() => { setQuery(''); }} className="shrink-0 text-gray-400 hover:text-foreground transition-colors">
+                        <X size={16} />
+                      </button>
+                    )}
                   </div>
                   <button
                     type="submit"
