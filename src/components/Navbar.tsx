@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Heart, Menu, X, Github, Download, Search } from 'lucide-react';
+import { Sun, Moon, Heart, Menu, X, Github, Download, Search, Tv } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -29,9 +29,9 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
   }, []);
 
   const navLinks = [
-    { name: 'Home', onClick: onLogoClick, comingSoon: false },
-    { name: 'Movies', onClick: () => {}, comingSoon: true },
-    { name: 'Series', onClick: () => {}, comingSoon: true },
+    { name: 'Home', onClick: onLogoClick, comingSoon: false, href: null },
+    { name: 'Movies', onClick: () => {}, comingSoon: true, href: null },
+    { name: 'Series', onClick: () => {}, comingSoon: true, href: null },
   ];
 
   return (
@@ -77,6 +77,14 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
               )}
             </button>
           ))}
+          <a
+            href="https://streamarino.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-purple-500 hover:bg-purple-500/10 transition-all"
+          >
+            <Tv size={15} /> Stream
+          </a>
         </div>
 
         {/* Right side Actions */}
@@ -162,6 +170,15 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
                   <div className="w-1.5 h-1.5 rounded-full bg-primary opacity-0 group-hover:opacity-100" />
                 </button>
               ))}
+              <a
+                href="https://streamarino.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-lg text-purple-500 hover:bg-purple-500/10 transition-all"
+              >
+                <Tv size={18} /> Stream on Streamarino
+              </a>
               <div className="mt-4 pt-4 border-t border-border-subtle flex items-center justify-between px-4">
                 <span className="text-sm font-medium text-gray-500">Theme</span>
                 <button

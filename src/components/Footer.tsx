@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Twitter, Heart, Youtube, Instagram, Shield, Zap, Globe, Star, Users, MessageCircle } from 'lucide-react';
+import { Github, Twitter, Heart, Youtube, Instagram, Shield, Zap, Globe, Star, Users, MessageCircle, Tv } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const WA_NUMBER = '2349016471351';
@@ -89,6 +89,17 @@ export const Footer: React.FC = () => {
                   </button>
                 </li>
               ))}
+              <li>
+                <a
+                  href="https://streamarino.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-purple-500 hover:text-purple-400 transition-colors flex items-center gap-2 font-bold"
+                >
+                  <Tv size={13} />
+                  Stream on Streamarino
+                </a>
+              </li>
               <li>
                 <motion.a
                   href={`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Bug report — Downloaderino: ')}`}

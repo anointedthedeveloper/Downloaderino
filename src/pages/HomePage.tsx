@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, PlayCircle, Star, ShieldCheck, LayoutGrid, List, X } from 'lucide-react';
+import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, PlayCircle, Star, ShieldCheck, LayoutGrid, List, X, Tv } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { MovieItem } from '../types';
 import Pagination from '../components/Pagination';
@@ -91,6 +91,20 @@ const HomePage: React.FC<Props> = ({
               <Sparkles size={14} className="animate-pulse" />
               <span>Premium Media Hub v2.0</span>
             </motion.div>
+
+            {/* Stream CTA */}
+            <motion.a
+              href="https://streamarino.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-500 text-xs font-black uppercase tracking-widest hover:bg-purple-500/20 transition-all"
+            >
+              <Tv size={13} />
+              <span>Want to stream instead? Visit Streamarino</span>
+            </motion.a>
 
             {/* Headline */}
             <div className="space-y-4">
