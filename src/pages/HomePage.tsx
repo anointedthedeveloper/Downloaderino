@@ -314,7 +314,7 @@ const HomePage: React.FC<Props> = ({
                   <span className="text-foreground font-bold">{results.length + altsource.length}</span>{' '}
                   titles found
                   {altsource.length > 0 && (
-                    <span className="text-gray-500"> ({results.length} primary · <span className="text-orange-500">{altsource.length} altsource</span>)</span>
+                    <span className="text-gray-500"> ({results.length} primary · <span className="text-orange-500">{altsource.length} AltSource</span>)</span>
                   )}
                 </p>
               </div>

@@ -258,7 +258,7 @@ const App: React.FC = () => {
             <HomePage
               key="home"
               results={results}
-              altSource={altSource}
+              altsource={altSource}
               loading={loading}
               wakingUp={wakingUp}
               currentPage={currentPage}
