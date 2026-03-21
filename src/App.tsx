@@ -33,8 +33,16 @@ const App: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [notFound, setNotFound] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [featured, setFeatured] = useState<MovieItem[]>([]);
 
   useEffect(() => { trackVisit(); }, []);
+
+  useEffect(() => {
+    api.getFeatured().then(r => {
+      const raw: MovieItem[] = r.data?.items || r.data || [];
+      setFeatured(raw);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const path = window.location.pathname;
@@ -259,6 +267,7 @@ const App: React.FC = () => {
               key="home"
               results={results}
               altsource={altSource}
+              featured={featured}
               loading={loading}
               wakingUp={wakingUp}
               currentPage={currentPage}

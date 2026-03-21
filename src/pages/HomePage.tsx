@@ -19,6 +19,7 @@ const FEATURES = [
 interface Props {
   results: MovieItem[];
   altsource: AltSourceItem[];
+  featured: MovieItem[];
   loading: boolean;
   wakingUp?: boolean;
   currentPage: number;
@@ -81,7 +82,7 @@ const AltSourceCard: React.FC<{ item: AltSourceItem; viewMode: 'grid' | 'list'; 
 };
 
 const HomePage: React.FC<Props> = ({
-  results, altsource, loading, wakingUp = false, currentPage, totalPages,
+  results, altsource, featured, loading, wakingUp = false, currentPage, totalPages,
   favorites, query: externalQuery, onSearch, onSelectMovie, onSelectAltSource, onToggleFav,
 }) => {
   const [query, setQuery] = useState(externalQuery);
@@ -120,6 +121,9 @@ const HomePage: React.FC<Props> = ({
   };
 
   const hasResults = results.length > 0 || altsource.length > 0;
+  const showFeatured = !hasResults && !loading && featured.length > 0;
+  const featuredMovies = featured.filter(i => i.subjectType === 1);
+  const featuredSeries = featured.filter(i => i.subjectType !== 1);
 
   // AltSource items whose title closely matches the query go first, rest go after primary
   const qNorm = externalQuery.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
@@ -414,9 +418,55 @@ const HomePage: React.FC<Props> = ({
           </motion.div>
         )}
 
+        {/* Featured Sections — shown when no search results */}
+        {showFeatured && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-14">
+            {featuredMovies.length > 0 && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2">
+                  <Film size={16} className="text-primary" />
+                  <h2 className="text-xl font-black tracking-tight">Movies</h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-5 gap-y-8">
+                  {featuredMovies.map((item, idx) => (
+                    <MovieCard
+                      key={item.detailPath + idx}
+                      item={item}
+                      isFavorite={favorites.includes(item.title)}
+                      onToggleFavorite={onToggleFav}
+                      onClick={() => onSelectMovie(item.detailPath)}
+                      viewMode="grid"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            {featuredSeries.length > 0 && (
+              <div className="space-y-5">
+                <div className="flex items-center gap-2">
+                  <Tv2 size={16} className="text-primary" />
+                  <h2 className="text-xl font-black tracking-tight">Series</h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-5 gap-y-8">
+                  {featuredSeries.map((item, idx) => (
+                    <MovieCard
+                      key={item.detailPath + idx}
+                      item={item}
+                      isFavorite={favorites.includes(item.title)}
+                      onToggleFavorite={onToggleFav}
+                      onClick={() => onSelectMovie(item.detailPath)}
+                      viewMode="grid"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
         {/* Empty State */}
         <AnimatePresence>
-          {!loading && !hasResults && (
+          {!loading && !hasResults && !showFeatured && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}

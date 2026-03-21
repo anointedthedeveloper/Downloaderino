@@ -34,6 +34,9 @@ export const api = {
     return url;
   },
 
+  getFeatured: (page: number = 1, pageSize: number = 24) =>
+    axios.get(`${BASE_URL}/featured?page=${page}&pageSize=${pageSize}`),
+
   getAltSourceDetail: (url: string) =>
     axios.get(`${BASE_URL}/netnaija/detail?url=${encodeURIComponent(url)}`),
 
