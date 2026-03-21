@@ -78,6 +78,7 @@ export interface SearchResponse {
 export interface NetnaijItem {
   title: string;
   url: string;
+  cover?: string;
   source: 'netnaija';
 }
 

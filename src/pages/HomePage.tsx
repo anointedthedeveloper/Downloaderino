@@ -62,7 +62,9 @@ const NetnaijCard: React.FC<{ item: NetnaijItem; viewMode: 'grid' | 'list' }> = 
       className="card cursor-pointer group bg-surface border-border-subtle hover:border-orange-500/40"
     >
       <div className="aspect-[2/3] relative overflow-hidden bg-orange-500/5 flex items-center justify-center">
-        <ExternalLink size={32} className="text-orange-500/40" />
+        {item.cover
+          ? <img src={item.cover} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+          : <ExternalLink size={32} className="text-orange-500/40" />}
         <div className="absolute top-3 left-3">
           <span className="px-2 py-1 rounded-lg bg-orange-500 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
             Netnaija
