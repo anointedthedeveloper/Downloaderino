@@ -38,10 +38,18 @@ const App: React.FC = () => {
   useEffect(() => { trackVisit(); }, []);
 
   useEffect(() => {
-    api.getFeatured().then(r => {
-      const raw: MovieItem[] = r.data?.items || r.data || [];
-      setFeatured(raw);
-    }).catch(() => {});
+    const queries = ['action', 'drama', 'thriller'];
+    Promise.all(queries.map(q => api.getFeatured(1).then ? api.search(q, 1) : api.search(q, 1)))
+      .then(responses => {
+        const seen = new Set<string>();
+        const all: MovieItem[] = [];
+        for (const r of responses) {
+          for (const item of (r.data?.items || [])) {
+            if (!seen.has(item.detailPath)) { seen.add(item.detailPath); all.push(item); }
+          }
+        }
+        setFeatured(all);
+      }).catch(() => {});
   }, []);
 
   useEffect(() => {
