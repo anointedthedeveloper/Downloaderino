@@ -112,6 +112,7 @@ const HomePage: React.FC<Props> = ({
   const [seriesShown, setSeriesShown] = useState(PAGE_SIZE);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heroSearchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const typingRef = useRef(false);
 
   // Sync external query only when not actively typing
@@ -139,6 +140,13 @@ const HomePage: React.FC<Props> = ({
       onSearch(val, 1);
     }, 600);
   };
+
+  // Restore focus to the input after every render while user is typing
+  useEffect(() => {
+    if (typingRef.current && inputRef.current && document.activeElement !== inputRef.current) {
+      inputRef.current.focus();
+    }
+  });
 
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
@@ -171,6 +179,7 @@ const HomePage: React.FC<Props> = ({
         <Search className="absolute left-4 text-gray-400 group-focus-within:text-primary transition-colors shrink-0 z-10" size={compact ? 15 : 18} />
         <input
           id={compact ? 'sticky-search' : 'hero-search'}
+          ref={compact ? undefined : inputRef}
           type="text"
           value={query}
           onChange={e => handleQueryChange(e.target.value)}
