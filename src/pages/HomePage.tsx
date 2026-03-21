@@ -47,7 +47,7 @@ const AltSourceCard: React.FC<{ item: AltSourceItem; viewMode: 'grid' | 'list'; 
         <div className="flex-grow min-w-0 space-y-1.5">
           <h3 className="font-bold text-sm line-clamp-1 group-hover:text-orange-500 transition-colors">{item.title}</h3>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-wider">
-            altsource
+            AltSource
           </span>
         </div>
         <ExternalLink size={14} className="text-gray-400 shrink-0" />
@@ -66,7 +66,7 @@ const AltSourceCard: React.FC<{ item: AltSourceItem; viewMode: 'grid' | 'list'; 
           : <ExternalLink size={32} className="text-orange-500/40" />}
         <div className="absolute top-3 left-3">
           <span className="px-2 py-1 rounded-lg bg-orange-500 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
-            altsource
+            AltSource
           </span>
         </div>
       </div>
@@ -120,6 +120,14 @@ const HomePage: React.FC<Props> = ({
   };
 
   const hasResults = results.length > 0 || altsource.length > 0;
+
+  // AltSource items whose title closely matches the query go first, rest go after primary
+  const qNorm = externalQuery.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  const altTop = altsource.filter(i => {
+    const t = i.title.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\b(download|movie|series|season|\d{4})\b/g, '').trim();
+    return t === qNorm || t.startsWith(qNorm) || qNorm.split(' ').every(w => t.includes(w));
+  });
+  const altBottom = altsource.filter(i => !altTop.includes(i));
   const seoTitle = externalQuery
     ? `Download "${externalQuery}" — Search Results`
     : undefined;
@@ -353,6 +361,9 @@ const HomePage: React.FC<Props> = ({
                   exit={{ opacity: 0 }}
                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-5 gap-y-8"
                 >
+                  {altTop.map((item, idx) => (
+                    <AltSourceCard key={'top' + item.url + idx} item={item} viewMode="grid" onClick={() => onSelectAltSource(item)} />
+                  ))}
                   {results.map((item, idx) => (
                     <MovieCard
                       key={item.detailPath + idx}
@@ -363,8 +374,8 @@ const HomePage: React.FC<Props> = ({
                       viewMode="grid"
                     />
                   ))}
-                  {altsource.map((item, idx) => (
-                    <AltSourceCard key={item.url + idx} item={item} viewMode="grid" onClick={() => onSelectAltSource(item)} />
+                  {altBottom.map((item, idx) => (
+                    <AltSourceCard key={'bot' + item.url + idx} item={item} viewMode="grid" onClick={() => onSelectAltSource(item)} />
                   ))}
                 </motion.div>
               ) : (
@@ -375,6 +386,9 @@ const HomePage: React.FC<Props> = ({
                   exit={{ opacity: 0 }}
                   className="flex flex-col gap-3"
                 >
+                  {altTop.map((item, idx) => (
+                    <AltSourceCard key={'top' + item.url + idx} item={item} viewMode="list" onClick={() => onSelectAltSource(item)} />
+                  ))}
                   {results.map((item, idx) => (
                     <MovieCard
                       key={item.detailPath + idx}
@@ -385,8 +399,8 @@ const HomePage: React.FC<Props> = ({
                       viewMode="list"
                     />
                   ))}
-                  {altsource.map((item, idx) => (
-                    <AltSourceCard key={item.url + idx} item={item} viewMode="list" onClick={() => onSelectAltSource(item)} />
+                  {altBottom.map((item, idx) => (
+                    <AltSourceCard key={'bot' + item.url + idx} item={item} viewMode="list" onClick={() => onSelectAltSource(item)} />
                   ))}
                 </motion.div>
               )}
