@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { api } from './api';
 import type { MovieItem, MovieDetail, LinksResponse, AltSourceItem, AltSourceDetail } from './types';
@@ -13,8 +13,14 @@ import { trackVisit, trackSearch } from './analytics';
 
 const linksCache = new Map<string, LinksResponse>();
 
+type View = 'home' | 'detail' | 'altsource' | 'admin' | '404';
+
 const App: React.FC = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('dl_dark') === '1' ||
+      (!localStorage.getItem('dl_dark') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+  const [view, setView] = useState<View>('home');
   const [results, setResults] = useState<MovieItem[]>([]);
   const [altSource, setAltSource] = useState<AltSourceItem[]>([]);
   const [altSourceDetail, setAltSourceDetail] = useState<AltSourceDetail | null>(null);
@@ -27,17 +33,30 @@ const App: React.FC = () => {
   const [season, setSeason] = useState(1);
   const [episode, setEpisode] = useState(1);
   const [links, setLinks] = useState<LinksResponse | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('dl_favs') || '[]'); } catch { return []; }
+  });
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [notFound, setNotFound] = useState(false);
-  const [showAdmin, setShowAdmin] = useState(false);
   const [featured, setFeatured] = useState<MovieItem[]>([]);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
 
-  useEffect(() => { trackVisit(); }, []);
-
+  // Persist dark mode
   useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    localStorage.setItem('dl_dark', isDarkMode ? '1' : '0');
+  }, [isDarkMode]);
+
+  // Persist favorites
+  useEffect(() => {
+    localStorage.setItem('dl_favs', JSON.stringify(favorites));
+  }, [favorites]);
+
+  // Load featured
+  useEffect(() => {
+    trackVisit();
+    setFeaturedLoading(true);
     const queries = ['action', 'drama', 'thriller'];
     Promise.all(queries.map(q => api.search(q, 1)))
       .then(responses => {
@@ -49,58 +68,64 @@ const App: React.FC = () => {
           }
         }
         setFeatured(all);
-      }).catch(() => {});
+      })
+      .catch(() => {})
+      .finally(() => setFeaturedLoading(false));
   }, []);
 
+  const loadDetail = useCallback(async (path: string, pushState = true) => {
+    setLoading(true);
+    setDetailPath(path);
+    setView('detail');
+    if (pushState) window.history.pushState({ view: 'detail', path }, '', `/${path}`);
+    try {
+      const response = await api.getDetail(path);
+      const detail = response.data;
+      setSelectedMovie(detail);
+      const isMovie = detail.seasons?.[0]?.se === 0;
+      setSeason(isMovie ? 0 : 1);
+      setEpisode(isMovie ? 0 : 1);
+      setLinks(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      setView('404');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Handle initial URL on load
   useEffect(() => {
-    const path = window.location.pathname;
-    if (path === '/admin-analytics') {
-      setShowAdmin(true);
-    } else if (path !== '/') {
-      const slug = path.replace('/', '');
-      sessionStorage.setItem('dl_reload_slug', slug);
-      loadDetail(slug);
+    const path = window.location.pathname.replace(/^\//, '');
+    if (path === 'admin-analytics') {
+      setView('admin');
+      window.history.replaceState({ view: 'admin' }, '', '/admin-analytics');
+    } else if (path && path !== '') {
+      loadDetail(path, false);
+    } else {
+      window.history.replaceState({ view: 'home' }, '', '/');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Browser back/forward
   useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname;
-      if (path === '/admin-analytics') {
-        setShowAdmin(true);
+    const onPop = () => {
+      const path = window.location.pathname.replace(/^\//, '');
+      if (path === 'admin-analytics') {
+        setView('admin');
         setSelectedMovie(null);
-        setNotFound(false);
-      } else if (path === '/') {
-        setNotFound(false);
+      } else if (path === '') {
+        setView('home');
         setSelectedMovie(null);
         setAltSourceDetail(null);
-        setShowAdmin(false);
       } else {
-        setShowAdmin(false);
-        setNotFound(false);
-        setAltSourceDetail(null);
-        loadDetail(path.replace('/', ''));
+        loadDetail(path, false);
       }
     };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  useEffect(() => {
-    if (selectedMovie) {
-      const slug = selectedMovie.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      window.history.pushState({}, '', `/${slug}`);
-    } else if (showAdmin) {
-      window.history.pushState({}, '', '/admin-analytics');
-    } else if (!notFound) {
-      window.history.pushState({}, '', '/');
-    }
-  }, [selectedMovie, notFound, showAdmin]);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', isDarkMode);
-  }, [isDarkMode]);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [loadDetail]);
 
   const processSearchData = (data: any, page: number) => {
     const rawItems: MovieItem[] = data.primary || [];
@@ -122,15 +147,16 @@ const App: React.FC = () => {
     setCurrentPage(page);
     setSelectedMovie(null);
     setAltSourceDetail(null);
+    setView('home');
   };
 
   const handleSearch = async (q: string, page: number = 1) => {
-    if (!q) return;
+    if (!q.trim()) return;
     setQuery(q);
     trackSearch(q);
     setLoading(true);
-    setNotFound(false);
     setWakingUp(false);
+    window.history.pushState({ view: 'home', q, page }, '', '/');
     try {
       const response = await api.searchAll(q, page);
       processSearchData(response.data, page);
@@ -142,35 +168,10 @@ const App: React.FC = () => {
         try {
           const response = await api.searchAll(q, page);
           processSearchData(response.data, page);
-        } catch {
-          setNotFound(true);
-        }
+        } catch { setView('404'); }
       } else {
-        console.error(error);
-        setNotFound(true);
+        setView('404');
       }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadDetail = async (path: string) => {
-    setLoading(true);
-    setDetailPath(path);
-    setNotFound(false);
-    try {
-      const response = await api.getDetail(path);
-      const detail = response.data;
-      setSelectedMovie(detail);
-      const firstSeason = detail.seasons?.[0];
-      const isMovie = firstSeason?.se === 0;
-      setSeason(isMovie ? 0 : 1);
-      setEpisode(isMovie ? 0 : 1);
-      setLinks(null);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (error) {
-      console.error(error);
-      setNotFound(true);
     } finally {
       setLoading(false);
     }
@@ -182,54 +183,44 @@ const App: React.FC = () => {
     const effectiveSe = isMovie ? 0 : season;
     const effectiveEp = isMovie ? 0 : episode;
     const cacheKey = `${selectedMovie.subject_id}:${detailPath}:${effectiveSe}:${effectiveEp}`;
-    if (linksCache.has(cacheKey)) {
-      setLinks(linksCache.get(cacheKey)!);
-      return;
-    }
+    if (linksCache.has(cacheKey)) { setLinks(linksCache.get(cacheKey)!); return; }
     setLoading(true);
     try {
       const response = await api.getLinks(selectedMovie.subject_id, detailPath, effectiveSe, effectiveEp);
       linksCache.set(cacheKey, response.data);
       setLinks(response.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* silent */ }
+    finally { setLoading(false); }
   };
 
   const toggleFavorite = (title: string) => {
-    setFavorites(prev =>
-      prev.includes(title) ? prev.filter(f => f !== title) : [...prev, title]
-    );
+    setFavorites(prev => prev.includes(title) ? prev.filter(f => f !== title) : [...prev, title]);
   };
 
   const loadAltSourceDetail = async (item: AltSourceItem) => {
     setAltSourceLoading(true);
     setAltSourceDetail({ title: item.title, cover: item.cover || '', description: '', url: item.url, source: 'altsource', downloads: [] });
+    setView('altsource');
+    window.history.pushState({ view: 'altsource' }, '', '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     try {
       const res = await api.getAltSourceDetail(item.url);
       setAltSourceDetail(res.data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setAltSourceLoading(false);
-    }
+    } catch { /* silent */ }
+    finally { setAltSourceLoading(false); }
   };
 
   const handleBackToHome = () => {
-    setNotFound(false);
-    setShowAdmin(false);
+    setView('home');
     setSelectedMovie(null);
     setAltSourceDetail(null);
-    window.history.pushState({}, '', '/');
+    window.history.pushState({ view: 'home' }, '', '/');
   };
 
   return (
     <Layout
       isDark={isDarkMode}
-      onToggleDark={() => setIsDarkMode(!isDarkMode)}
+      onToggleDark={() => setIsDarkMode(d => !d)}
       favCount={favorites.length}
       onLogoClick={handleBackToHome}
       onSearchFocus={() => {
@@ -240,24 +231,25 @@ const App: React.FC = () => {
         }, 50);
       }}
     >
-      <div className="container-custom pt-8 pb-20">
-        <AnimatePresence mode="wait">
-          {showAdmin ? (
+      <AnimatePresence mode="wait">
+        {view === 'admin' ? (
+          <div className="container-custom pt-8 pb-20">
             <AdminAnalytics key="admin" onBack={handleBackToHome} />
-          ) : notFound ? (
+          </div>
+        ) : view === '404' ? (
+          <div className="container-custom pt-8 pb-20">
             <NotFound key="404" onBack={handleBackToHome} />
-          ) : altSourceDetail ? (
-            <AltSourceDetailView
-              key="altsource"
-              detail={altSourceDetail}
-              loading={altSourceLoading}
-              onBack={handleBackToHome}
-            />
-          ) : selectedMovie ? (
+          </div>
+        ) : view === 'altsource' && altSourceDetail ? (
+          <div className="container-custom pt-8 pb-20">
+            <AltSourceDetailView key="altsource" detail={altSourceDetail} loading={altSourceLoading} onBack={handleBackToHome} />
+          </div>
+        ) : view === 'detail' && selectedMovie ? (
+          <div className="container-custom pt-8 pb-20">
             <MovieDetailView
               key="detail"
               movie={selectedMovie}
-              onBack={() => setSelectedMovie(null)}
+              onBack={() => { setView('home'); window.history.back(); }}
               onToggleFavorite={toggleFavorite}
               isFavorite={favorites.includes(selectedMovie.title)}
               onWatchTrailer={setTrailerUrl}
@@ -270,31 +262,37 @@ const App: React.FC = () => {
               loading={loading}
               detailPath={detailPath!}
             />
-          ) : (
-            <HomePage
-              key="home"
-              results={results}
-              altsource={altSource}
-              featured={featured}
-              loading={loading}
-              wakingUp={wakingUp}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              favorites={favorites}
-              query={query}
-              onSearch={handleSearch}
-              onSelectMovie={loadDetail}
-              onSelectAltSource={loadAltSourceDetail}
-              onToggleFav={toggleFavorite}
-            />
-          )}
-        </AnimatePresence>
-      </div>
+          </div>
+        ) : view === 'detail' && loading ? (
+          <div key="detail-loading" className="container-custom pt-8 pb-20 flex items-center justify-center min-h-[60vh]">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm font-medium text-gray-400">Loading…</p>
+            </div>
+          </div>
+        ) : (
+          <HomePage
+            key="home"
+            results={results}
+            altsource={altSource}
+            featured={featured}
+            featuredLoading={featuredLoading}
+            loading={loading}
+            wakingUp={wakingUp}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            favorites={favorites}
+            query={query}
+            onSearch={handleSearch}
+            onSelectMovie={loadDetail}
+            onSelectAltSource={loadAltSourceDetail}
+            onToggleFav={toggleFavorite}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
-        {trailerUrl && (
-          <TrailerModal url={trailerUrl} onClose={() => setTrailerUrl(null)} />
-        )}
+        {trailerUrl && <TrailerModal url={trailerUrl} onClose={() => setTrailerUrl(null)} />}
       </AnimatePresence>
     </Layout>
   );
