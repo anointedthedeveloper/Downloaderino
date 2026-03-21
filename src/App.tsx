@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { api } from './api';
-import type { MovieItem, MovieDetail, LinksResponse, NetnaijItem } from './types';
+import type { MovieItem, MovieDetail, LinksResponse, AltSourceItem, AltSourceDetail } from './types';
 import { Layout } from './components/Layout';
 import HomePage from './pages/HomePage';
 import { MovieDetailView } from './components/MovieDetailView';
 import { TrailerModal } from './components/TrailerModal';
+import { AltSourceDetailView } from './components/AltSourceDetailView';
 import { NotFound } from './components/NotFound';
 import { AdminAnalytics } from './pages/AdminAnalytics';
 import { trackVisit, trackSearch } from './analytics';
@@ -15,9 +16,12 @@ const linksCache = new Map<string, LinksResponse>();
 const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [results, setResults] = useState<MovieItem[]>([]);
-  const [netnaija, setNetnaija] = useState<NetnaijItem[]>([]);
+  const [altSource, setAltSource] = useState<AltSourceItem[]>([]);
+  const [altSourceDetail, setAltSourceDetail] = useState<AltSourceDetail | null>(null);
+  const [altSourceLoading, setAltSourceLoading] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<MovieDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [wakingUp, setWakingUp] = useState(false);
   const [detailPath, setDetailPath] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [season, setSeason] = useState(1);
@@ -27,29 +31,23 @@ const App: React.FC = () => {
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalResults, setTotalResults] = useState(0);
   const [notFound, setNotFound] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
 
-  // Track visit once per session
   useEffect(() => { trackVisit(); }, []);
 
-  // Restore correct view on hard reload / direct URL visit
   useEffect(() => {
     const path = window.location.pathname;
     if (path === '/admin-analytics') {
       setShowAdmin(true);
     } else if (path !== '/') {
-      // Slug URL — try to load the detail
       const slug = path.replace('/', '');
-      // Store slug so user stays on the page after reload
       sessionStorage.setItem('dl_reload_slug', slug);
       loadDetail(slug);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handle browser back/forward navigation
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
@@ -60,20 +58,19 @@ const App: React.FC = () => {
       } else if (path === '/') {
         setNotFound(false);
         setSelectedMovie(null);
+        setAltSourceDetail(null);
         setShowAdmin(false);
       } else {
-        // Back/forward to a detail slug — reload it
         setShowAdmin(false);
         setNotFound(false);
+        setAltSourceDetail(null);
         loadDetail(path.replace('/', ''));
       }
     };
-
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Update URL when movie is selected
   useEffect(() => {
     if (selectedMovie) {
       const slug = selectedMovie.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -89,40 +86,53 @@ const App: React.FC = () => {
     document.documentElement.classList.toggle('dark', isDarkMode);
   }, [isDarkMode]);
 
-  const handleSearch = async (query: string, page: number = 1) => {
-    if (!query) return;
-    setQuery(query);
-    trackSearch(query);
+  const processSearchData = (data: any, page: number) => {
+    const rawItems: MovieItem[] = data.primary || [];
+    const seen = new Set<string>();
+    const items = rawItems.filter((item: MovieItem) => {
+      if (seen.has(item.detailPath)) return false;
+      seen.add(item.detailPath);
+      return true;
+    });
+    const normalize = (t: string) =>
+      t.toLowerCase().replace(/\b(download|movie|series|season|episode|\d+)\b/g, '').replace(/\s+/g, ' ').trim();
+    const primaryTitles = new Set(items.map(i => normalize(i.title)));
+    const altItems: AltSourceItem[] = (data.netnaija || []).filter(
+      (n: AltSourceItem) => !primaryTitles.has(normalize(n.title))
+    );
+    setResults(items);
+    setAltSource(!data.errors?.netnaija ? altItems : []);
+    setTotalPages(data.pager?.pages || 1);
+    setCurrentPage(page);
+    setSelectedMovie(null);
+    setAltSourceDetail(null);
+  };
+
+  const handleSearch = async (q: string, page: number = 1) => {
+    if (!q) return;
+    setQuery(q);
+    trackSearch(q);
     setLoading(true);
     setNotFound(false);
+    setWakingUp(false);
     try {
-      const response = await api.searchAll(query, page);
-      const data = response.data;
-      const rawItems: MovieItem[] = data.primary || [];
-      // Deduplicate primary by detailPath
-      const seen = new Set<string>();
-      const items = rawItems.filter((item: MovieItem) => {
-        if (seen.has(item.detailPath)) return false;
-        seen.add(item.detailPath);
-        return true;
-      });
-      // Deduplicate netnaija against primary by normalized title
-      const normalize = (t: string) =>
-        t.toLowerCase().replace(/\b(download|movie|series|season|episode|\d+)\b/g, '').replace(/\s+/g, ' ').trim();
-      const primaryTitles = new Set(items.map(i => normalize(i.title)));
-      const netnaijItems: NetnaijItem[] = (data.netnaija || []).filter(
-        (n: NetnaijItem) => !primaryTitles.has(normalize(n.title))
-      );
-      setResults(items);
-      setNetnaija(!data.errors?.netnaija ? netnaijItems : []);
-      setTotalPages(data.pager?.pages || 1);
-      const total = data.pager?.total || data.pager?.total_items || data.counts || data.total || items.length;
-      setTotalResults(total);
-      setCurrentPage(page);
-      setSelectedMovie(null);
-    } catch (error) {
-      console.error(error);
-      setNotFound(true);
+      const response = await api.searchAll(q, page);
+      processSearchData(response.data, page);
+    } catch (error: any) {
+      if (error?.response?.status === 503) {
+        setWakingUp(true);
+        await new Promise(r => setTimeout(r, 4000));
+        setWakingUp(false);
+        try {
+          const response = await api.searchAll(q, page);
+          processSearchData(response.data, page);
+        } catch {
+          setNotFound(true);
+        }
+      } else {
+        console.error(error);
+        setNotFound(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -173,17 +183,30 @@ const App: React.FC = () => {
   };
 
   const toggleFavorite = (title: string) => {
-    setFavorites(prev => 
-      prev.includes(title) 
-        ? prev.filter(f => f !== title)
-        : [...prev, title]
+    setFavorites(prev =>
+      prev.includes(title) ? prev.filter(f => f !== title) : [...prev, title]
     );
+  };
+
+  const loadAltSourceDetail = async (item: AltSourceItem) => {
+    setAltSourceLoading(true);
+    setAltSourceDetail({ title: item.title, cover: item.cover || '', description: '', url: item.url, source: 'altsource', downloads: [] });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      const res = await api.getAltSourceDetail(item.url);
+      setAltSourceDetail(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAltSourceLoading(false);
+    }
   };
 
   const handleBackToHome = () => {
     setNotFound(false);
     setShowAdmin(false);
     setSelectedMovie(null);
+    setAltSourceDetail(null);
     window.history.pushState({}, '', '/');
   };
 
@@ -207,6 +230,13 @@ const App: React.FC = () => {
             <AdminAnalytics key="admin" onBack={handleBackToHome} />
           ) : notFound ? (
             <NotFound key="404" onBack={handleBackToHome} />
+          ) : altSourceDetail ? (
+            <AltSourceDetailView
+              key="altsource"
+              detail={altSourceDetail}
+              loading={altSourceLoading}
+              onBack={handleBackToHome}
+            />
           ) : selectedMovie ? (
             <MovieDetailView
               key="detail"
@@ -228,15 +258,16 @@ const App: React.FC = () => {
             <HomePage
               key="home"
               results={results}
-              netnaija={netnaija}
+              altSource={altSource}
               loading={loading}
+              wakingUp={wakingUp}
               currentPage={currentPage}
               totalPages={totalPages}
-              totalResults={totalResults}
               favorites={favorites}
               query={query}
               onSearch={handleSearch}
               onSelectMovie={loadDetail}
+              onSelectAltSource={loadAltSourceDetail}
               onToggleFav={toggleFavorite}
             />
           )}

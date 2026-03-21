@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, PlayCircle, Star, ShieldCheck, LayoutGrid, List, X, Tv } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
-import type { MovieItem, NetnaijItem } from '../types';
+import type { MovieItem, AltSourceItem } from '../types';
 import Pagination from '../components/Pagination';
 import { MovieCard } from '../components/MovieCard';
 import { Spinner } from '../components/Spinner';
@@ -18,46 +18,45 @@ const FEATURES = [
 
 interface Props {
   results: MovieItem[];
-  netnaija: NetnaijItem[];
+  altsource: AltSourceItem[];
   loading: boolean;
+  wakingUp?: boolean;
   currentPage: number;
   totalPages: number;
-  totalResults: number;
   favorites: string[];
   query: string;
   onSearch: (q: string, page?: number) => void;
   onSelectMovie: (path: string) => void;
+  onSelectAltSource: (item: AltSourceItem) => void;
   onToggleFav: (title: string) => void;
 }
 
-const NetnaijCard: React.FC<{ item: NetnaijItem; viewMode: 'grid' | 'list' }> = ({ item, viewMode }) => {
+const AltSourceCard: React.FC<{ item: AltSourceItem; viewMode: 'grid' | 'list'; onClick: () => void }> = ({ item, viewMode, onClick }) => {
   if (viewMode === 'list') {
     return (
-      <motion.a
-        href={item.url}
-        target="_blank"
-        rel="noopener noreferrer"
+      <motion.div
+        onClick={onClick}
         whileHover={{ x: 4 }}
         className="flex items-center gap-4 p-3 rounded-2xl bg-surface border border-border-subtle hover:border-orange-500/40 cursor-pointer transition-all group hover:shadow-md"
       >
-        <div className="w-16 h-24 rounded-xl bg-orange-500/10 border border-orange-500/20 shrink-0 flex items-center justify-center">
-          <ExternalLink size={20} className="text-orange-500" />
+        <div className="w-16 h-24 rounded-xl bg-orange-500/10 border border-orange-500/20 shrink-0 overflow-hidden flex items-center justify-center">
+          {item.cover
+            ? <img src={item.cover} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+            : <ExternalLink size={20} className="text-orange-500" />}
         </div>
         <div className="flex-grow min-w-0 space-y-1.5">
           <h3 className="font-bold text-sm line-clamp-1 group-hover:text-orange-500 transition-colors">{item.title}</h3>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-wider">
-            Netnaija
+            altsource
           </span>
         </div>
         <ExternalLink size={14} className="text-gray-400 shrink-0" />
-      </motion.a>
+      </motion.div>
     );
   }
   return (
-    <motion.a
-      href={item.url}
-      target="_blank"
-      rel="noopener noreferrer"
+    <motion.div
+      onClick={onClick}
       whileHover={{ y: -8 }}
       className="card cursor-pointer group bg-surface border-border-subtle hover:border-orange-500/40"
     >
@@ -67,29 +66,29 @@ const NetnaijCard: React.FC<{ item: NetnaijItem; viewMode: 'grid' | 'list' }> = 
           : <ExternalLink size={32} className="text-orange-500/40" />}
         <div className="absolute top-3 left-3">
           <span className="px-2 py-1 rounded-lg bg-orange-500 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
-            Netnaija
+            altsource
           </span>
         </div>
       </div>
       <div className="p-3 bg-background">
         <h3 className="font-bold text-xs line-clamp-1 group-hover:text-orange-500 transition-colors">{item.title}</h3>
         <p className="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
-          <ExternalLink size={9} /> Opens externally
+          <ExternalLink size={9} /> View downloads
         </p>
       </div>
-    </motion.a>
+    </motion.div>
   );
 };
 
 const HomePage: React.FC<Props> = ({
-  results, netnaija, loading, currentPage, totalPages, totalResults,
-  favorites, query: externalQuery, onSearch, onSelectMovie, onToggleFav,
+  results, altsource, loading, wakingUp = false, currentPage, totalPages,
+  favorites, query: externalQuery, onSearch, onSelectMovie, onSelectAltSource, onToggleFav,
 }) => {
   const [query, setQuery] = useState(externalQuery);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Search while typing — 400 ms debounce
+  // Search while typing — 700 ms debounce (avoids hammering cold-start API)
   const handleQueryChange = (val: string) => {
     setQuery(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -97,7 +96,7 @@ const HomePage: React.FC<Props> = ({
     debounceRef.current = setTimeout(() => {
       onSearch(val, 1);
       scrollToResults();
-    }, 400);
+    }, 700);
   };
 
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
@@ -120,7 +119,7 @@ const HomePage: React.FC<Props> = ({
     scrollToResults();
   };
 
-  const hasResults = results.length > 0 || netnaija.length > 0;
+  const hasResults = results.length > 0 || altsource.length > 0;
   const seoTitle = externalQuery
     ? `Download "${externalQuery}" — Search Results`
     : undefined;
@@ -274,7 +273,15 @@ const HomePage: React.FC<Props> = ({
             animate={{ opacity: 1 }}
             className="space-y-8"
           >
-            <Spinner />
+            {wakingUp ? (
+              <div className="flex flex-col items-center gap-3 py-8">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm font-bold text-gray-400">Waking up the server… <span className="text-primary">hang tight</span></p>
+                <p className="text-xs text-gray-500">The API cold-starts after inactivity. Retrying automatically.</p>
+              </div>
+            ) : (
+              <Spinner />
+            )}
             {/* Skeleton grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10">
               {Array.from({ length: 12 }).map((_, i) => (
@@ -304,10 +311,10 @@ const HomePage: React.FC<Props> = ({
                 </div>
                 <h2 className="text-3xl font-black tracking-tight">Search Results</h2>
                 <p className="text-sm font-medium text-gray-400">
-                  <span className="text-foreground font-bold">{results.length + netnaija.length}</span>{' '}
+                  <span className="text-foreground font-bold">{results.length + altsource.length}</span>{' '}
                   titles found
-                  {netnaija.length > 0 && (
-                    <span className="text-gray-500"> ({results.length} primary · <span className="text-orange-500">{netnaija.length} Netnaija</span>)</span>
+                  {altsource.length > 0 && (
+                    <span className="text-gray-500"> ({results.length} primary · <span className="text-orange-500">{altsource.length} altsource</span>)</span>
                   )}
                 </p>
               </div>
@@ -356,8 +363,8 @@ const HomePage: React.FC<Props> = ({
                       viewMode="grid"
                     />
                   ))}
-                  {netnaija.map((item, idx) => (
-                    <NetnaijCard key={item.url + idx} item={item} viewMode="grid" />
+                  {altsource.map((item, idx) => (
+                    <AltSourceCard key={item.url + idx} item={item} viewMode="grid" onClick={() => onSelectAltSource(item)} />
                   ))}
                 </motion.div>
               ) : (
@@ -378,8 +385,8 @@ const HomePage: React.FC<Props> = ({
                       viewMode="list"
                     />
                   ))}
-                  {netnaija.map((item, idx) => (
-                    <NetnaijCard key={item.url + idx} item={item} viewMode="list" />
+                  {altsource.map((item, idx) => (
+                    <AltSourceCard key={item.url + idx} item={item} viewMode="list" onClick={() => onSelectAltSource(item)} />
                   ))}
                 </motion.div>
               )}

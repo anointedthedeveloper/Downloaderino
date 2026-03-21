@@ -75,15 +75,29 @@ export interface SearchResponse {
   pager: Pager;
 }
 
-export interface NetnaijItem {
+export interface AltSourceItem {
   title: string;
   url: string;
   cover?: string;
-  source: 'netnaija';
+  source: 'altsource';
+}
+
+export interface AltSourceDownload {
+  label: string;
+  url: string;
+}
+
+export interface AltSourceDetail {
+  title: string;
+  cover: string;
+  description: string;
+  url: string;
+  source: 'altsource';
+  downloads: AltSourceDownload[];
 }
 
 export interface SearchAllResponse {
   primary: MovieItem[];
-  netnaija: NetnaijItem[];
+  altsource: AltSourceItem[];
   errors: Record<string, string>;
 }
