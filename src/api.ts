@@ -37,6 +37,9 @@ export const api = {
   getAltSourceDetail: (url: string) =>
     axios.get(`${BASE_URL}/netnaija/detail?url=${encodeURIComponent(url)}`),
 
+  getAltSourceProxyUrl: (url: string) =>
+    `${BASE_URL}/altsource/proxy?url=${encodeURIComponent(url)}`,
+
   getSubtitleUrl: (subjectId: string, detailPath: string, se: number = 1, ep: number = 1, lang: string = 'en') => {
     return `${BASE_URL}/stream?subjectId=${subjectId}&detailPath=${encodeURIComponent(detailPath)}&se=${se}&ep=${ep}&type=caption&lang=${lang}`;
   }
