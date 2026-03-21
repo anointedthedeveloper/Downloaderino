@@ -74,3 +74,15 @@ export interface SearchResponse {
   items: MovieItem[];
   pager: Pager;
 }
+
+export interface NetnaijItem {
+  title: string;
+  url: string;
+  source: 'netnaija';
+}
+
+export interface SearchAllResponse {
+  primary: MovieItem[];
+  netnaija: NetnaijItem[];
+  errors: Record<string, string>;
+}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, PlayCircle, Star, ShieldCheck, LayoutGrid, List, X, Tv } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { MovieItem } from '../types';
+import { ExternalLink } from 'lucide-react';
+import type { MovieItem, NetnaijItem } from '../types';
 import Pagination from '../components/Pagination';
 import { MovieCard } from '../components/MovieCard';
 import { Spinner } from '../components/Spinner';
@@ -17,6 +18,7 @@ const FEATURES = [
 
 interface Props {
   results: MovieItem[];
+  netnaija: NetnaijItem[];
   loading: boolean;
   currentPage: number;
   totalPages: number;
@@ -28,8 +30,57 @@ interface Props {
   onToggleFav: (title: string) => void;
 }
 
+const NetnaijCard: React.FC<{ item: NetnaijItem; viewMode: 'grid' | 'list' }> = ({ item, viewMode }) => {
+  if (viewMode === 'list') {
+    return (
+      <motion.a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        whileHover={{ x: 4 }}
+        className="flex items-center gap-4 p-3 rounded-2xl bg-surface border border-border-subtle hover:border-orange-500/40 cursor-pointer transition-all group hover:shadow-md"
+      >
+        <div className="w-16 h-24 rounded-xl bg-orange-500/10 border border-orange-500/20 shrink-0 flex items-center justify-center">
+          <ExternalLink size={20} className="text-orange-500" />
+        </div>
+        <div className="flex-grow min-w-0 space-y-1.5">
+          <h3 className="font-bold text-sm line-clamp-1 group-hover:text-orange-500 transition-colors">{item.title}</h3>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-500 text-[10px] font-black uppercase tracking-wider">
+            Netnaija
+          </span>
+        </div>
+        <ExternalLink size={14} className="text-gray-400 shrink-0" />
+      </motion.a>
+    );
+  }
+  return (
+    <motion.a
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      whileHover={{ y: -8 }}
+      className="card cursor-pointer group bg-surface border-border-subtle hover:border-orange-500/40"
+    >
+      <div className="aspect-[2/3] relative overflow-hidden bg-orange-500/5 flex items-center justify-center">
+        <ExternalLink size={32} className="text-orange-500/40" />
+        <div className="absolute top-3 left-3">
+          <span className="px-2 py-1 rounded-lg bg-orange-500 text-white text-[10px] font-black uppercase tracking-wider shadow-lg">
+            Netnaija
+          </span>
+        </div>
+      </div>
+      <div className="p-3 bg-background">
+        <h3 className="font-bold text-xs line-clamp-1 group-hover:text-orange-500 transition-colors">{item.title}</h3>
+        <p className="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
+          <ExternalLink size={9} /> Opens externally
+        </p>
+      </div>
+    </motion.a>
+  );
+};
+
 const HomePage: React.FC<Props> = ({
-  results, loading, currentPage, totalPages, totalResults,
+  results, netnaija, loading, currentPage, totalPages, totalResults,
   favorites, query: externalQuery, onSearch, onSelectMovie, onToggleFav,
 }) => {
   const [query, setQuery] = useState(externalQuery);
@@ -252,7 +303,7 @@ const HomePage: React.FC<Props> = ({
                 <h2 className="text-3xl font-black tracking-tight">Search Results</h2>
                 <p className="text-sm font-medium text-gray-400">
                   Showing{' '}
-                  <span className="text-foreground font-bold">{results.length}</span>{' '}
+                  <span className="text-foreground font-bold">{results.length + netnaija.length}</span>{' '}
                   of{' '}
                   <span className="text-foreground font-bold">{totalResults > 0 ? totalResults.toLocaleString() : results.length}</span>{' '}
                   titles found.
@@ -303,6 +354,9 @@ const HomePage: React.FC<Props> = ({
                       viewMode="grid"
                     />
                   ))}
+                  {netnaija.map((item, idx) => (
+                    <NetnaijCard key={item.url + idx} item={item} viewMode="grid" />
+                  ))}
                 </motion.div>
               ) : (
                 <motion.div
@@ -321,6 +375,9 @@ const HomePage: React.FC<Props> = ({
                       onClick={() => onSelectMovie(item.detailPath)}
                       viewMode="list"
                     />
+                  ))}
+                  {netnaija.map((item, idx) => (
+                    <NetnaijCard key={item.url + idx} item={item} viewMode="list" />
                   ))}
                 </motion.div>
               )}

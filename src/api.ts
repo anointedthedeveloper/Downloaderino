@@ -5,6 +5,9 @@ const BASE_URL = 'https://anointedthedeveloper-downloaderinoapi.hf.space';
 export const api = {
   search: (query: string, page: number = 1) =>
     axios.get(`${BASE_URL}/search?q=${encodeURIComponent(query)}&page=${page}`),
+
+  searchAll: (query: string, page: number = 1) =>
+    axios.get(`${BASE_URL}/search/all?q=${encodeURIComponent(query)}&page=${page}`),
   
   getDetail: (detailPath: string) =>
     axios.get(`${BASE_URL}/detail?detailPath=${encodeURIComponent(detailPath)}`),

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { api } from './api';
-import type { MovieItem, MovieDetail, LinksResponse } from './types';
+import type { MovieItem, MovieDetail, LinksResponse, NetnaijItem } from './types';
 import { Layout } from './components/Layout';
 import HomePage from './pages/HomePage';
 import { MovieDetailView } from './components/MovieDetailView';
@@ -15,6 +15,7 @@ const linksCache = new Map<string, LinksResponse>();
 const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [results, setResults] = useState<MovieItem[]>([]);
+  const [netnaija, setNetnaija] = useState<NetnaijItem[]>([]);
   const [selectedMovie, setSelectedMovie] = useState<MovieDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [detailPath, setDetailPath] = useState<string | null>(null);
@@ -95,23 +96,27 @@ const App: React.FC = () => {
     setLoading(true);
     setNotFound(false);
     try {
-      const response = await api.search(query, page);
-      const rawItems = response.data.items || [];
-      // Deduplicate by detailPath
+      const response = await api.searchAll(query, page);
+      const data = response.data;
+      const rawItems: MovieItem[] = data.primary || [];
+      // Deduplicate primary by detailPath
       const seen = new Set<string>();
       const items = rawItems.filter((item: MovieItem) => {
         if (seen.has(item.detailPath)) return false;
         seen.add(item.detailPath);
         return true;
       });
+      // Deduplicate netnaija against primary by normalized title
+      const normalize = (t: string) =>
+        t.toLowerCase().replace(/\b(download|movie|series|season|episode|\d+)\b/g, '').replace(/\s+/g, ' ').trim();
+      const primaryTitles = new Set(items.map(i => normalize(i.title)));
+      const netnaijItems: NetnaijItem[] = (data.netnaija || []).filter(
+        (n: NetnaijItem) => !primaryTitles.has(normalize(n.title))
+      );
       setResults(items);
-      setTotalPages(response.data.pager?.pages || 1);
-      const total =
-        response.data.pager?.total ||
-        response.data.pager?.total_items ||
-        response.data.counts ||
-        response.data.total ||
-        items.length;
+      setNetnaija(!data.errors?.netnaija ? netnaijItems : []);
+      setTotalPages(data.pager?.pages || 1);
+      const total = data.pager?.total || data.pager?.total_items || data.counts || data.total || items.length;
       setTotalResults(total);
       setCurrentPage(page);
       setSelectedMovie(null);
@@ -223,6 +228,7 @@ const App: React.FC = () => {
             <HomePage
               key="home"
               results={results}
+              netnaija={netnaija}
               loading={loading}
               currentPage={currentPage}
               totalPages={totalPages}
