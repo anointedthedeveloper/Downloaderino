@@ -34,7 +34,7 @@ export const api = {
     return url;
   },
 
-  getFeatured: (page: number = 1, pageSize: number = 24) =>
+  getFeatured: (page: number = 1) =>
     axios.get(`${BASE_URL}/search?q=popular&page=${page}`),
 
   getAltSourceDetail: (url: string) =>
