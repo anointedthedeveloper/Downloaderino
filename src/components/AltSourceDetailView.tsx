@@ -45,6 +45,13 @@ async function downloadWithProgress(
   URL.revokeObjectURL(a.href);
 }
 
+// Attempt to get a higher-res version of Netnaija cover URLs
+function hqCover(url: string): string {
+  if (!url) return url;
+  // Strip common thumbnail size suffixes: -150x200, -300x450, etc.
+  return url.replace(/-\d+x\d+(\.(?:jpg|jpeg|png|webp))/i, '$1');
+}
+
 export const AltSourceDetailView: React.FC<Props> = ({ detail, loading, onBack }) => {
   const [tasks, setTasks] = useState<DownloadTask[]>([]);
   const abortRefs = useRef<Record<string, AbortController>>({});
@@ -150,7 +157,7 @@ export const AltSourceDetailView: React.FC<Props> = ({ detail, loading, onBack }
         <div className="space-y-4">
           <div className="relative rounded-[24px] overflow-hidden shadow-2xl border border-border-subtle aspect-[2/3] max-w-[260px] mx-auto lg:max-w-none bg-orange-500/5 flex items-center justify-center">
             {detail.cover
-              ? <img src={detail.cover} alt={detail.title} className="w-full h-full object-cover" />
+              ? <img src={hqCover(detail.cover)} alt={detail.title} className="w-full h-full object-cover" loading="eager" decoding="async" />
               : <Film size={64} className="text-orange-500/30" />}
             <div className="absolute top-4 left-4">
               <span className="px-3 py-1.5 rounded-xl bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest shadow-xl">

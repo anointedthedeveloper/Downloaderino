@@ -112,9 +112,12 @@ const HomePage: React.FC<Props> = ({
   const [seriesShown, setSeriesShown] = useState(PAGE_SIZE);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heroSearchRef = useRef<HTMLDivElement>(null);
+  const typingRef = useRef(false);
 
-  // Sync external query
-  useEffect(() => { setQuery(externalQuery); }, [externalQuery]);
+  // Sync external query only when not actively typing
+  useEffect(() => {
+    if (!typingRef.current) setQuery(externalQuery);
+  }, [externalQuery]);
 
   // Reset load-more when featured changes
   useEffect(() => { setMoviesShown(PAGE_SIZE); setSeriesShown(PAGE_SIZE); }, [featured]);
@@ -128,9 +131,14 @@ const HomePage: React.FC<Props> = ({
 
   const handleQueryChange = (val: string) => {
     setQuery(val);
+    typingRef.current = true;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (val.trim().length < 2) return;
-    debounceRef.current = setTimeout(() => { onSearch(val, 1); scrollToResults(); }, 600);
+    if (val.trim().length < 2) { typingRef.current = false; return; }
+    debounceRef.current = setTimeout(() => {
+      typingRef.current = false;
+      onSearch(val, 1);
+      scrollToResults();
+    }, 600);
   };
 
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
