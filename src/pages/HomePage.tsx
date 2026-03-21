@@ -151,8 +151,10 @@ const HomePage: React.FC<Props> = ({
 
   const quickSearch = (term: string) => { setQuery(term); onSearch(term, 1); scrollToResults(); };
 
+  // Only show loading skeleton after typing has stopped
+  const showLoading = loading && !typingRef.current;
   const hasResults = results.length > 0 || altsource.length > 0;
-  const showFeatured = !hasResults && !loading;
+  const showFeatured = !hasResults && !showLoading;
   const featuredMovies = featured.filter(i => i.subjectType === 1);
   const featuredSeries = featured.filter(i => i.subjectType !== 1);
 
@@ -182,7 +184,7 @@ const HomePage: React.FC<Props> = ({
         )}
         <button type="submit" disabled={loading}
           className={`absolute right-1.5 ${compact ? 'h-8 px-4 text-xs rounded-lg' : 'h-11 px-7 text-sm rounded-xl'} bg-primary hover:bg-primary-hover text-white font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 flex items-center gap-2 z-10 shrink-0`}>
-          {loading ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Search'}
+          {showLoading ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Search'}
         </button>
       </div>
     </form>
@@ -280,7 +282,7 @@ const HomePage: React.FC<Props> = ({
       <section id="results-section" className="container-custom space-y-10">
 
         {/* Loading skeleton */}
-        {loading && (
+        {showLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
             {wakingUp && (
               <div className="flex flex-col items-center gap-2 py-4 text-center">
@@ -294,7 +296,7 @@ const HomePage: React.FC<Props> = ({
         )}
 
         {/* Search results */}
-        {!loading && hasResults && (
+        {!showLoading && hasResults && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
@@ -418,7 +420,7 @@ const HomePage: React.FC<Props> = ({
 
         {/* Empty state */}
         <AnimatePresence>
-          {!loading && !hasResults && !featuredLoading && featured.length === 0 && (
+          {!showLoading && !hasResults && !featuredLoading && featured.length === 0 && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center py-24 gap-4 text-center">
               <div className="w-16 h-16 rounded-2xl bg-surface border border-border-subtle flex items-center justify-center">
