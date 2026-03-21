@@ -176,9 +176,10 @@ export const AltSourceDetailView: React.FC<Props> = ({ detail, loading, onBack }
             </div>
             <h2 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight">{detail.title}</h2>
             {detail.description && (
-              <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-base font-medium max-w-3xl">
-                {detail.description}
-              </p>
+              <p
+                className="text-gray-500 dark:text-gray-400 leading-relaxed text-base font-medium max-w-3xl"
+                dangerouslySetInnerHTML={{ __html: detail.description }}
+              />
             )}
           </div>
 

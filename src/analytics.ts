@@ -73,8 +73,6 @@ export function trackSearch(query: string) {
   const q = query.toLowerCase().trim();
   data.topSearches[q] = (data.topSearches[q] ?? 0) + 1;
   save(data);
-  // Umami custom event
-  (window as any).umami?.track('search', { query: q });
 }
 
 export function trackDownload(quality: string, type: 'movie' | 'series' | 'season' | 'range') {
@@ -85,8 +83,6 @@ export function trackDownload(quality: string, type: 'movie' | 'series' | 'seaso
   data.downloadsByType[type] = (data.downloadsByType[type] ?? 0) + 1;
   data.dailyDownloads[t] = (data.dailyDownloads[t] ?? 0) + 1;
   save(data);
-  // Umami custom event
-  (window as any).umami?.track('download', { quality, type });
 }
 
 export function getAnalytics(): AnalyticsData {
