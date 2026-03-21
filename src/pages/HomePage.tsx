@@ -422,7 +422,7 @@ const HomePage: React.FC<Props> = ({
         {showFeatured && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-14">
             {featuredMovies.length > 0 && (
-              <div className="space-y-5">
+              <div id="section-movies" className="space-y-5">
                 <div className="flex items-center gap-2">
                   <Film size={16} className="text-primary" />
                   <h2 className="text-xl font-black tracking-tight">Movies</h2>
@@ -442,7 +442,7 @@ const HomePage: React.FC<Props> = ({
               </div>
             )}
             {featuredSeries.length > 0 && (
-              <div className="space-y-5">
+              <div id="section-series" className="space-y-5">
                 <div className="flex items-center gap-2">
                   <Tv2 size={16} className="text-primary" />
                   <h2 className="text-xl font-black tracking-tight">Series</h2>

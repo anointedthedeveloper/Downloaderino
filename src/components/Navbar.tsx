@@ -29,9 +29,9 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
   }, []);
 
   const navLinks = [
-    { name: 'Home', onClick: onLogoClick, comingSoon: false, href: null },
-    { name: 'Movies', onClick: () => {}, comingSoon: true, href: null },
-    { name: 'Series', onClick: () => {}, comingSoon: true, href: null },
+    { name: 'Home', onClick: onLogoClick, comingSoon: false },
+    { name: 'Movies', onClick: () => { onLogoClick(); setTimeout(() => document.getElementById('section-movies')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }, comingSoon: false },
+    { name: 'Series', onClick: () => { onLogoClick(); setTimeout(() => document.getElementById('section-series')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }, comingSoon: false },
   ];
 
   return (
