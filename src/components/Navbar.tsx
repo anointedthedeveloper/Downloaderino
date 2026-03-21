@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Heart, Menu, X, Github, Download, Search, Tv, Film, Tv2 } from 'lucide-react';
+import { Sun, Moon, Heart, Menu, X, Github, Download, Search, Tv, Film, Tv2, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface NavbarProps {
@@ -8,9 +8,10 @@ interface NavbarProps {
   favCount: number;
   onLogoClick: () => void;
   onSearchFocus: () => void;
+  onRequest?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, onLogoClick, onSearchFocus }) => {
+export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, onLogoClick, onSearchFocus, onRequest }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -59,6 +60,12 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold text-purple-400 hover:bg-background hover:shadow-sm transition-all">
             <Tv size={14} /> Stream
           </a>
+          {onRequest && (
+            <button onClick={onRequest}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold text-primary hover:bg-primary/10 transition-all">
+              <Send size={14} /> Request
+            </button>
+          )}
         </div>
 
         {/* Right actions */}
@@ -112,6 +119,12 @@ export const Navbar: React.FC<NavbarProps> = ({ isDark, onToggleDark, favCount, 
                 className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-base text-purple-400 hover:bg-purple-500/10 transition-all">
                 <Tv size={16} /> Stream on Streamarino
               </a>
+              {onRequest && (
+                <button onClick={() => { onRequest(); setIsMenuOpen(false); }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-base text-primary hover:bg-primary/10 transition-all">
+                  <Send size={16} /> Request a Title
+                </button>
+              )}
               <div className="mt-2 pt-3 border-t border-border-subtle flex items-center justify-between px-4">
                 <span className="text-sm text-gray-500">Theme</span>
                 <button onClick={() => { onToggleDark(); setIsMenuOpen(false); }}

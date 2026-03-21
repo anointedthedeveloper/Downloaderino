@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, ShieldCheck, LayoutGrid, List, X, Tv, ChevronDown } from 'lucide-react';
+import { Search, TrendingUp, Zap, Film, Tv2, Subtitles, Sparkles, Layers, ShieldCheck, LayoutGrid, List, X, Tv, ChevronDown, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 import type { MovieItem, AltSourceItem } from '../types';
@@ -31,6 +31,7 @@ interface Props {
   onSelectMovie: (path: string) => void;
   onSelectAltSource: (item: AltSourceItem) => void;
   onToggleFav: (title: string) => void;
+  onRequest: () => void;
 }
 
 const SkeletonCard = () => (
@@ -102,7 +103,7 @@ const AltSourceCard: React.FC<{ item: AltSourceItem; viewMode: 'grid' | 'list'; 
 const HomePage: React.FC<Props> = ({
   results, altsource, featured, featuredLoading, loading, wakingUp = false,
   currentPage, totalPages, favorites, query: externalQuery,
-  onSearch, onSelectMovie, onSelectAltSource, onToggleFav,
+  onSearch, onSelectMovie, onSelectAltSource, onToggleFav, onRequest,
 }) => {
   const [query, setQuery] = useState(externalQuery);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -330,6 +331,21 @@ const HomePage: React.FC<Props> = ({
             </AnimatePresence>
 
             <Pagination current={currentPage} total={totalPages} onChange={p => { onSearch(query, p); scrollToResults(); }} />
+          </motion.div>
+        )}
+
+        {/* Request CTA */}
+        {showFeatured && !featuredLoading && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-primary/5 border border-primary/20">
+            <div>
+              <p className="text-sm font-black text-foreground">Can't find what you're looking for?</p>
+              <p className="text-xs text-gray-400 mt-0.5">Request a movie, series, or anime and we'll add it.</p>
+            </div>
+            <button onClick={onRequest}
+              className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-xs font-black hover:bg-primary-hover transition-all shadow-md shadow-primary/20">
+              <Send size={13} /> Request
+            </button>
           </motion.div>
         )}
 
