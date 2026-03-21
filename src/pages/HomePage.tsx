@@ -137,7 +137,6 @@ const HomePage: React.FC<Props> = ({
     debounceRef.current = setTimeout(() => {
       typingRef.current = false;
       onSearch(val, 1);
-      scrollToResults();
     }, 600);
   };
 
