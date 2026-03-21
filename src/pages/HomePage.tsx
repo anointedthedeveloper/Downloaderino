@@ -100,6 +100,42 @@ const AltSourceCard: React.FC<{ item: AltSourceItem; viewMode: 'grid' | 'list'; 
   );
 };
 
+interface SearchInputProps {
+  query: string;
+  setQuery: (q: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  loading: boolean;
+  showLoading: boolean;
+  compact?: boolean;
+}
+
+const SearchInput: React.FC<SearchInputProps> = ({
+  query, setQuery, onSubmit, loading, showLoading, compact = false
+}) => (
+  <form onSubmit={onSubmit} className={`relative w-full ${compact ? "" : "max-w-2xl mx-auto"} group`}>
+    <div className={`relative flex items-center bg-surface border border-border-subtle ${compact ? "rounded-xl" : "rounded-2xl shadow-2xl"} focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(34,197,94,0.1)] transition-all duration-200`}>
+      <Search className="absolute left-4 text-gray-400 group-focus-within:text-primary transition-colors shrink-0 z-10" size={compact ? 15 : 18} />
+      <input
+        id={compact ? "sticky-search" : "hero-search"}
+        type="text"
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        placeholder="Search movies, series, anime…"
+        className={`w-full bg-transparent ${compact ? "py-2.5 pl-10 pr-24 text-sm" : "py-4 pl-12 pr-32 text-base md:text-lg"} font-semibold outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600`}
+      />
+      {query && (
+        <button type="button" onClick={() => { setQuery(""); }} className={`absolute ${compact ? "right-20" : "right-24"} text-gray-400 hover:text-foreground transition-colors z-10`}>
+          <X size={14} />
+        </button>
+      )}
+      <button type="submit" disabled={loading}
+        className={`absolute right-1.5 ${compact ? "h-8 px-4 text-xs rounded-lg" : "h-11 px-7 text-sm rounded-xl"} bg-primary hover:bg-primary-hover text-white font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 flex items-center gap-2 z-10 shrink-0`}>
+        {showLoading ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Search"}
+      </button>
+    </div>
+  </form>
+);
+
 const HomePage: React.FC<Props> = ({
   results, altsource, featured, featuredLoading, loading, wakingUp = false,
   currentPage, totalPages, favorites, query: externalQuery,
@@ -111,9 +147,29 @@ const HomePage: React.FC<Props> = ({
   const [moviesShown, setMoviesShown] = useState(PAGE_SIZE);
   const [seriesShown, setSeriesShown] = useState(PAGE_SIZE);
   const heroSearchRef = useRef<HTMLDivElement>(null);
+  const isManualSearch = useRef(false);
 
   // Sync external query
-  useEffect(() => { setQuery(externalQuery); }, [externalQuery]);
+  useEffect(() => { 
+    if (externalQuery !== query && (externalQuery || query)) {
+      setQuery(externalQuery); 
+    }
+  }, [externalQuery]);
+
+  // Auto search
+  useEffect(() => {
+    if (!query.trim() || query === externalQuery) return;
+    
+    const timer = setTimeout(() => {
+      if (isManualSearch.current) {
+        isManualSearch.current = false;
+        return;
+      }
+      onSearch(query, 1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [query, onSearch, externalQuery]);
 
   // Reset load-more when featured changes
   useEffect(() => { setMoviesShown(PAGE_SIZE); setSeriesShown(PAGE_SIZE); }, [featured]);
@@ -129,10 +185,19 @@ const HomePage: React.FC<Props> = ({
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) { onSearch(query, 1); scrollToResults(); }
+    if (query.trim()) { 
+      isManualSearch.current = true;
+      onSearch(query, 1); 
+      scrollToResults(); 
+    }
   };
 
-  const quickSearch = (term: string) => { setQuery(term); onSearch(term, 1); scrollToResults(); };
+  const quickSearch = (term: string) => { 
+    isManualSearch.current = true;
+    setQuery(term); 
+    onSearch(term, 1); 
+    scrollToResults(); 
+  };
 
   const showLoading = loading;
   const hasResults = results.length > 0 || altsource.length > 0;
@@ -146,31 +211,6 @@ const HomePage: React.FC<Props> = ({
     return t === qNorm || t.startsWith(qNorm) || qNorm.split(' ').every(w => t.includes(w));
   });
   const altBottom = altsource.filter(i => !altTop.includes(i));
-
-  const SearchInput = ({ compact = false }: { compact?: boolean }) => (
-    <form onSubmit={submit} className={`relative w-full ${compact ? '' : 'max-w-2xl mx-auto'} group`}>
-      <div className={`relative flex items-center bg-surface border border-border-subtle ${compact ? 'rounded-xl' : 'rounded-2xl shadow-2xl'} focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(34,197,94,0.1)] transition-all duration-200`}>
-        <Search className="absolute left-4 text-gray-400 group-focus-within:text-primary transition-colors shrink-0 z-10" size={compact ? 15 : 18} />
-        <input
-          id={compact ? 'sticky-search' : 'hero-search'}
-          type="text"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search movies, series, anime…"
-          className={`w-full bg-transparent ${compact ? 'py-2.5 pl-10 pr-24 text-sm' : 'py-4 pl-12 pr-32 text-base md:text-lg'} font-semibold outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600`}
-        />
-        {query && (
-          <button type="button" onClick={() => { setQuery(''); }} className={`absolute ${compact ? 'right-20' : 'right-24'} text-gray-400 hover:text-foreground transition-colors z-10`}>
-            <X size={14} />
-          </button>
-        )}
-        <button type="submit" disabled={loading}
-          className={`absolute right-1.5 ${compact ? 'h-8 px-4 text-xs rounded-lg' : 'h-11 px-7 text-sm rounded-xl'} bg-primary hover:bg-primary-hover text-white font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50 flex items-center gap-2 z-10 shrink-0`}>
-          {showLoading ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Search'}
-        </button>
-      </div>
-    </form>
-  );
 
   return (
     <div className="pb-24 overflow-hidden">
@@ -190,7 +230,14 @@ const HomePage: React.FC<Props> = ({
             className="fixed top-[57px] left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-b border-border-subtle shadow-sm"
           >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5">
-              <SearchInput compact />
+              <SearchInput 
+                query={query} 
+                setQuery={setQuery} 
+                onSubmit={submit} 
+                loading={loading} 
+                showLoading={showLoading} 
+                compact 
+              />
             </div>
           </motion.div>
         )}
@@ -221,7 +268,7 @@ const HomePage: React.FC<Props> = ({
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}>
               <h1 className="text-5xl sm:text-7xl md:text-[88px] font-black tracking-tight leading-[0.88] mb-3">
                 UNLIMITED<br />
-                <span className="text-primary" style={{ textShadow: '0 0 80px rgba(34,197,94,0.3)' }}>DOWNLOADS.</span>
+                <span className="text-primary" style={{ textShadow: "0 0 80px rgba(34,197,94,0.3)" }}>DOWNLOADS.</span>
               </h1>
               <p className="text-base md:text-lg text-gray-500 dark:text-gray-400 font-medium max-w-lg mx-auto">
                 Movies, series, anime — all in HD. Free, fast, no sign-up.
@@ -230,7 +277,13 @@ const HomePage: React.FC<Props> = ({
 
             {/* Search */}
             <motion.div ref={heroSearchRef} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
-              <SearchInput />
+              <SearchInput 
+                query={query} 
+                setQuery={setQuery} 
+                onSubmit={submit} 
+                loading={loading} 
+                showLoading={showLoading} 
+              />
             </motion.div>
 
             {/* Trending */}
