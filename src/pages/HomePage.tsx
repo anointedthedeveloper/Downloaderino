@@ -120,7 +120,7 @@ const HomePage: React.FC<Props> = ({
     scrollToResults();
   };
 
-  const hasResults = results.length > 0;
+  const hasResults = results.length > 0 || netnaija.length > 0;
   const seoTitle = externalQuery
     ? `Download "${externalQuery}" — Search Results`
     : undefined;
@@ -304,11 +304,11 @@ const HomePage: React.FC<Props> = ({
                 </div>
                 <h2 className="text-3xl font-black tracking-tight">Search Results</h2>
                 <p className="text-sm font-medium text-gray-400">
-                  Showing{' '}
                   <span className="text-foreground font-bold">{results.length + netnaija.length}</span>{' '}
-                  of{' '}
-                  <span className="text-foreground font-bold">{totalResults > 0 ? totalResults.toLocaleString() : results.length}</span>{' '}
-                  titles found.
+                  titles found
+                  {netnaija.length > 0 && (
+                    <span className="text-gray-500"> ({results.length} primary · <span className="text-orange-500">{netnaija.length} Netnaija</span>)</span>
+                  )}
                 </p>
               </div>
 
