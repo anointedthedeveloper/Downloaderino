@@ -110,15 +110,10 @@ const HomePage: React.FC<Props> = ({
   const [stickyVisible, setStickyVisible] = useState(false);
   const [moviesShown, setMoviesShown] = useState(PAGE_SIZE);
   const [seriesShown, setSeriesShown] = useState(PAGE_SIZE);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heroSearchRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const typingRef = useRef(false);
 
-  // Sync external query only when not actively typing
-  useEffect(() => {
-    if (!typingRef.current) setQuery(externalQuery);
-  }, [externalQuery]);
+  // Sync external query
+  useEffect(() => { setQuery(externalQuery); }, [externalQuery]);
 
   // Reset load-more when featured changes
   useEffect(() => { setMoviesShown(PAGE_SIZE); setSeriesShown(PAGE_SIZE); }, [featured]);
@@ -130,26 +125,6 @@ const HomePage: React.FC<Props> = ({
     return () => obs.disconnect();
   }, []);
 
-  const handleQueryChange = (val: string) => {
-    setQuery(val);
-    typingRef.current = true;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (val.trim().length < 2) { typingRef.current = false; return; }
-    debounceRef.current = setTimeout(() => {
-      typingRef.current = false;
-      onSearch(val, 1);
-    }, 600);
-  };
-
-  // Restore focus to the input after every render while user is typing
-  useEffect(() => {
-    if (typingRef.current && inputRef.current && document.activeElement !== inputRef.current) {
-      inputRef.current.focus();
-    }
-  });
-
-  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
-
   const scrollToResults = () => setTimeout(() => document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
 
   const submit = (e: React.FormEvent) => {
@@ -159,8 +134,7 @@ const HomePage: React.FC<Props> = ({
 
   const quickSearch = (term: string) => { setQuery(term); onSearch(term, 1); scrollToResults(); };
 
-  // Only show loading skeleton after typing has stopped
-  const showLoading = loading && !typingRef.current;
+  const showLoading = loading;
   const hasResults = results.length > 0 || altsource.length > 0;
   const showFeatured = !hasResults && !showLoading;
   const featuredMovies = featured.filter(i => i.subjectType === 1);
@@ -179,10 +153,9 @@ const HomePage: React.FC<Props> = ({
         <Search className="absolute left-4 text-gray-400 group-focus-within:text-primary transition-colors shrink-0 z-10" size={compact ? 15 : 18} />
         <input
           id={compact ? 'sticky-search' : 'hero-search'}
-          ref={compact ? undefined : inputRef}
           type="text"
           value={query}
-          onChange={e => handleQueryChange(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           placeholder="Search movies, series, anime…"
           className={`w-full bg-transparent ${compact ? 'py-2.5 pl-10 pr-24 text-sm' : 'py-4 pl-12 pr-32 text-base md:text-lg'} font-semibold outline-none placeholder:text-gray-400 dark:placeholder:text-gray-600`}
         />
