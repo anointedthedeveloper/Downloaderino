@@ -160,7 +160,8 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
       : buildFilename(resolution, format, isSeason);
     const url = isSeason || epFrom != null
       ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo)
-      : api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
+      : links?.downloads?.find(d => String(d.resolution) === resolution)?.url
+        ?? api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
     startDownload(url, filename, sizeMb ? `${sizeMb} MB` : undefined);
   };
 
@@ -168,9 +169,11 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     const filename = epFrom != null
       ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
       : buildFilename(resolution, format, isSeason);
+    // For season/range, still go through /stream (ZIP). For single episode, use raw CDN URL.
     const url = isSeason || epFrom != null
       ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo)
-      : api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
+      : links?.downloads?.find(d => String(d.resolution) === resolution)?.url
+        ?? api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
