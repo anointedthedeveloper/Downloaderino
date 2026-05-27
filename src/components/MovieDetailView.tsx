@@ -154,26 +154,27 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     return `${title}${epLabel}_${resolution}p.${format || 'mp4'}`;
   };
 
-  const handleInAppDownload = (resolution: string, format: string, sizeMb: string, isSeason = false, epFrom?: number, epTo?: number) => {
+  const getFreshUrl = async (resolution: string, isSeason: boolean, epFrom?: number, epTo?: number): Promise<string> => {
+    if (isSeason || epFrom != null)
+      return api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo);
+    const res = await api.getLinks(movie.subject_id, detailPath, effectiveSe, effectiveEp);
+    return res.data.downloads.find((d: any) => String(d.resolution) === resolution)?.url
+      ?? api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
+  };
+
+  const handleInAppDownload = async (resolution: string, format: string, sizeMb: string, isSeason = false, epFrom?: number, epTo?: number) => {
     const filename = epFrom != null
       ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
       : buildFilename(resolution, format, isSeason);
-    const url = isSeason || epFrom != null
-      ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo)
-      : links?.downloads?.find(d => String(d.resolution) === resolution)?.url
-        ?? api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
+    const url = await getFreshUrl(resolution, isSeason, epFrom, epTo);
     startDownload(url, filename, sizeMb ? `${sizeMb} MB` : undefined);
   };
 
-  const handleDirectDownload = (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
+  const handleDirectDownload = async (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
     const filename = epFrom != null
       ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
       : buildFilename(resolution, format, isSeason);
-    // For season/range, still go through /stream (ZIP). For single episode, use raw CDN URL.
-    const url = isSeason || epFrom != null
-      ? api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo)
-      : links?.downloads?.find(d => String(d.resolution) === resolution)?.url
-        ?? api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
+    const url = await getFreshUrl(resolution, isSeason, epFrom, epTo);
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
