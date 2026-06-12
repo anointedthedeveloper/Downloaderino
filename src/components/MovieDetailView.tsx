@@ -29,6 +29,7 @@ interface DownloadTask {
   id: string;
   name: string;
   url: string;
+  headers?: Record<string, string>;
   progress: number;
   status: 'downloading' | 'done' | 'error' | 'bg';
   size?: string;
@@ -53,9 +54,10 @@ async function downloadWithProgress(
   url: string,
   filename: string,
   onProgress: (pct: number) => void,
-  signal: AbortSignal
+  signal: AbortSignal,
+  headers?: Record<string, string>
 ) {
-  const res = await fetch(url, { signal });
+  const res = await fetch(url, { signal, headers: headers ?? {} });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const contentLength = res.headers.get('content-length');
   const total = contentLength ? parseInt(contentLength, 10) : 0;
@@ -125,15 +127,15 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     { name: movie.title, url: `/${slug}` },
   ]);
 
-  const startDownload = async (url: string, filename: string, size?: string) => {
+  const startDownload = async (url: string, filename: string, size?: string, headers?: Record<string, string>) => {
     const id = Date.now().toString();
     const ctrl = new AbortController();
     abortRefs.current[id] = ctrl;
-    setDownloads(prev => [...prev, { id, name: filename, url, progress: 0, status: 'downloading', size }]);
+    setDownloads(prev => [...prev, { id, name: filename, url, headers, progress: 0, status: 'downloading', size }]);
     try {
       await downloadWithProgress(url, filename, (pct) => {
         setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress: pct < 0 ? 50 : pct } : d));
-      }, ctrl.signal);
+      }, ctrl.signal, headers);
       setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress: 100, status: 'done' } : d));
     } catch (e: any) {
       if (e.name !== 'AbortError') {
@@ -154,31 +156,50 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     return `${title}${epLabel}_${resolution}p.${format || 'mp4'}`;
   };
 
-  const getFreshUrl = async (resolution: string, isSeason: boolean, epFrom?: number, epTo?: number): Promise<string> => {
-    if (isSeason || epFrom != null)
-      return api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo);
+  const getFreshUrlAndHeaders = async (
+    resolution: string, isSeason: boolean, epFrom?: number, epTo?: number
+  ): Promise<{ url: string; headers?: Record<string, string> }> => {
+    if (isSeason || epFrom != null) {
+      return { url: api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo) };
+    }
+    // Use already-loaded links if resolution matches — avoids redundant fetch
+    const cached = links?.downloads?.find((d) => String(d.resolution) === resolution);
+    if (cached) return { url: cached.url, headers: cached.headers };
     const res = await api.getLinks(movie.subject_id, detailPath, effectiveSe, effectiveEp);
-    return res.data.downloads.find((d: any) => String(d.resolution) === resolution)?.url
-      ?? api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution);
+    const entry = res.data.downloads.find((d: any) => String(d.resolution) === resolution);
+    return {
+      url: entry?.url ?? api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution),
+      headers: entry?.headers,
+    };
   };
 
   const handleInAppDownload = async (resolution: string, format: string, sizeMb: string, isSeason = false, epFrom?: number, epTo?: number) => {
     const filename = epFrom != null
       ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
       : buildFilename(resolution, format, isSeason);
-    const url = await getFreshUrl(resolution, isSeason, epFrom, epTo);
-    startDownload(url, filename, sizeMb ? `${sizeMb} MB` : undefined);
+    const { url, headers } = await getFreshUrlAndHeaders(resolution, isSeason, epFrom, epTo);
+    startDownload(url, filename, sizeMb ? `${sizeMb} MB` : undefined, headers);
   };
 
   const handleDirectDownload = async (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
     const filename = epFrom != null
       ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
       : buildFilename(resolution, format, isSeason);
-    const url = await getFreshUrl(resolution, isSeason, epFrom, epTo);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
+    const { url, headers } = await getFreshUrlAndHeaders(resolution, isSeason, epFrom, epTo);
+    if (headers && Object.keys(headers).length > 0) {
+      // Headers required — must use fetch+blob since <a href> can't send headers
+      const blob = await fetch(url, { headers }).then(r => r.blob());
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } else {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+    }
   };
 
   const sendToBackground = (id: string) => {
@@ -672,7 +693,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                             {/* Action buttons */}
                             <div className="grid grid-cols-2 gap-px bg-border-subtle">
                               <button
-                                onClick={() => handleInAppDownload(String(link.resolution), link.format, link.size_mb)}
+                                onClick={() => startDownload(link.url, buildFilename(String(link.resolution), link.format), link.size_mb ? `${link.size_mb} MB` : undefined, link.headers)}
                                 disabled={!!activeTask}
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-background hover:bg-primary/5 text-xs font-black text-primary transition-colors disabled:opacity-50"
                               >
@@ -681,7 +702,22 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                                   : <><Download size={13} /> In-App</>}
                               </button>
                               <button
-                                onClick={() => handleDirectDownload(String(link.resolution), link.format)}
+                                onClick={async () => {
+                                  const filename = buildFilename(String(link.resolution), link.format);
+                                  if (link.headers && Object.keys(link.headers).length > 0) {
+                                    const blob = await fetch(link.url, { headers: link.headers }).then(r => r.blob());
+                                    const a = document.createElement('a');
+                                    a.href = URL.createObjectURL(blob);
+                                    a.download = filename;
+                                    a.click();
+                                    URL.revokeObjectURL(a.href);
+                                  } else {
+                                    const a = document.createElement('a');
+                                    a.href = link.url;
+                                    a.download = filename;
+                                    a.click();
+                                  }
+                                }}
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-background hover:bg-surface text-xs font-black text-gray-400 hover:text-foreground transition-colors border-l border-border-subtle"
                               >
                                 <ExternalLink size={13} /> Direct
@@ -703,15 +739,22 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {links.captions.map((cap, idx) => (
-                            <a
+                            <button
                               key={idx}
-                              href={cap.url}
-                              download={`${movie.title.replace(/[^a-z0-9]/gi, '_')}_${cap.lang}.srt`}
+                              onClick={async () => {
+                                const filename = `${movie.title.replace(/[^a-z0-9]/gi, '_')}_${cap.lang}.srt`;
+                                const blob = await fetch(cap.url, { headers: cap.headers ?? {} }).then(r => r.blob());
+                                const a = document.createElement('a');
+                                a.href = URL.createObjectURL(blob);
+                                a.download = filename;
+                                a.click();
+                                URL.revokeObjectURL(a.href);
+                              }}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-background border border-border-subtle text-xs font-bold text-gray-400 hover:border-primary/40 hover:text-primary transition-all"
                             >
                               <Download size={11} /> {cap.lang_name}
                               {cap.size_kb && <span className="text-[9px] text-gray-500">{cap.size_kb}KB</span>}
-                            </a>
+                            </button>
                           ))}
                         </div>
                       </div>

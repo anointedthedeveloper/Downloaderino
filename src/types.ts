@@ -60,6 +60,7 @@ export interface DownloadLink {
   format: string;
   size_mb: string;
   url: string;
+  headers?: Record<string, string>;
 }
 
 export interface Caption {
@@ -67,6 +68,7 @@ export interface Caption {
   lang_name: string;
   size_kb: string;
   url: string;
+  headers?: Record<string, string>;
 }
 
 export interface LinksResponse {
