@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://movie-api-nine-chi.vercel.app';
+// In production, requests go through /api/proxy/* which Vercel rewrites to the
+// upstream API — this avoids CORS since both share the same origin.
+// In local dev, requests hit the upstream directly (no proxy needed).
+const BASE_URL = import.meta.env.DEV
+  ? 'https://movie-api-nine-chi.vercel.app'
+  : '/api/proxy';
 
 export const api = {
   search: (query: string, page: number = 1) =>
