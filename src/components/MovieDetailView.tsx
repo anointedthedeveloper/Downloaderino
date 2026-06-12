@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
   ArrowLeft, Star, Play, Heart, Download,
-  Layers, Film, Calendar, Globe, Award, ExternalLink, ShieldCheck, Zap, Clock, X, Package, WifiOff
+  Layers, Film, Calendar, Globe, Award, ExternalLink, ShieldCheck, Zap, Clock, X, Package, WifiOff, Languages, Subtitles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { MovieDetail, LinksResponse } from '../types';
@@ -494,6 +494,41 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                 {movie.description}
               </p>
             )}
+
+            {/* Dubs / Audio Languages */}
+            {movie.dubs && movie.dubs.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                  <Languages size={12} className="text-primary" /> Audio & Dubbed Versions
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {movie.dubs.map((dub) => (
+                    <span
+                      key={dub.detail_path}
+                      className="px-2.5 py-1 rounded-lg bg-surface border border-border-subtle text-xs font-semibold text-gray-400 hover:border-primary/30 hover:text-primary transition-all cursor-default"
+                    >
+                      {dub.lang_name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Subtitles */}
+            {movie.subtitles && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
+                  <Subtitles size={12} className="text-primary" /> Subtitles Available
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {movie.subtitles.split(',').map(s => s.trim()).filter(Boolean).map(sub => (
+                    <span key={sub} className="px-2 py-0.5 rounded-md bg-primary/8 border border-primary/15 text-[10px] font-semibold text-primary/80">
+                      {sub}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Download Center */}
@@ -656,6 +691,31 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                         );
                       })}
                     </div>
+
+                    {/* Subtitle Downloads */}
+                    {links.captions && links.captions.length > 0 && (
+                      <div className="space-y-2 pt-2 border-t border-border-subtle">
+                        <div className="flex items-center gap-2">
+                          <Subtitles size={13} className="text-primary" />
+                          <h4 className="font-black text-[10px] uppercase tracking-widest text-gray-400">
+                            Subtitles ({links.captions.length})
+                          </h4>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {links.captions.map((cap, idx) => (
+                            <a
+                              key={idx}
+                              href={cap.url}
+                              download={`${movie.title.replace(/[^a-z0-9]/gi, '_')}_${cap.lang}.srt`}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-background border border-border-subtle text-xs font-bold text-gray-400 hover:border-primary/40 hover:text-primary transition-all"
+                            >
+                              <Download size={11} /> {cap.lang_name}
+                              {cap.size_kb && <span className="text-[9px] text-gray-500">{cap.size_kb}KB</span>}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

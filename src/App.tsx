@@ -65,7 +65,7 @@ const App: React.FC = () => {
         const all: MovieItem[] = [];
         for (const r of responses)
           for (const item of (r.data?.items || []))
-            if (!seen.has(item.detailPath)) { seen.add(item.detailPath); all.push(item); }
+            if (!seen.has(item.detailPath) && item.subjectType !== 6) { seen.add(item.detailPath); all.push(item); }
         setFeatured(all);
         sessionStorage.setItem(FEATURED_CACHE_KEY, JSON.stringify(all));
       })
@@ -123,6 +123,8 @@ const App: React.FC = () => {
   const processSearchData = (data: any, page: number) => {
     const seen = new Set<string>();
     const items: MovieItem[] = (data.primary || []).filter((item: MovieItem) => {
+      // Filter out music/non-movie content (subjectType 6 = music)
+      if ((item as any).subjectType === 6) return false;
       if (seen.has(item.detailPath)) return false;
       seen.add(item.detailPath); return true;
     });
@@ -134,7 +136,20 @@ const App: React.FC = () => {
     );
     setResults(items);
     setAltSource(!data.errors?.netnaija ? altItems : []);
-    setTotalPages(data.pager?.pages || 1);
+    // New API pager: { page, hasMore, nextPage, perPage, totalCount }
+    // Derive total pages from totalCount/perPage, fallback to hasMore heuristic
+    const pager = data.pager;
+    let totalPgs = 1;
+    if (pager) {
+      if (pager.pages != null) {
+        totalPgs = pager.pages;
+      } else if (pager.totalCount != null && pager.perPage != null) {
+        totalPgs = Math.max(1, Math.ceil(pager.totalCount / pager.perPage));
+      } else if (pager.hasMore) {
+        totalPgs = page + 1;
+      }
+    }
+    setTotalPages(totalPgs);
     setCurrentPage(page);
     setSelectedMovie(null);
     setAltSourceDetail(null);

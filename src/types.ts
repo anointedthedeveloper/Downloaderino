@@ -13,6 +13,8 @@ export interface MovieItem {
   subjectId?: string;
   imdbRatingValue?: string;
   imdbRatingCount?: number;
+  countryName?: string;
+  subtitles?: string;
 }
 
 export interface Season {
@@ -25,6 +27,13 @@ export interface Season {
   episodes?: number;
   max_ep?: number;
   resolutions?: number[];
+}
+
+export interface DubItem {
+  detail_path: string;
+  lang: string;
+  lang_name: string;
+  subject_id: string;
 }
 
 export interface MovieDetail {
@@ -40,9 +49,10 @@ export interface MovieDetail {
   imdb_votes?: number;
   trailer_url: string;
   backdrop: string;
-  dubs: string[];
+  dubs: DubItem[];
   seasons: Season[];
   duration?: number;
+  subtitles?: string;
 }
 
 export interface DownloadLink {

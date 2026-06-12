@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://anointedthedeveloper-downloaderinoapi.hf.space';
+const BASE_URL = 'https://movie-api-nine-chi.vercel.app';
 
 export const api = {
   search: (query: string, page: number = 1) =>
