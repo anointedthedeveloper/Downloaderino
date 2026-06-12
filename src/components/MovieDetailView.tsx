@@ -165,9 +165,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     if (isSeason || epFrom != null) {
       return { url: api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo) };
     }
-    // Use already-loaded links if resolution matches — avoids redundant fetch
-    const cached = links?.downloads?.find((d) => String(d.resolution) === resolution);
-    if (cached) return { url: cached.url, headers: cached.headers };
+    // Always fetch fresh — signed URLs expire
     const res = await api.getLinks(movie.subject_id, detailPath, effectiveSe, effectiveEp);
     const entry = res.data.downloads.find((d: any) => String(d.resolution) === resolution);
     return {
@@ -687,7 +685,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                             {/* Action buttons */}
                             <div className="grid grid-cols-2 gap-px bg-border-subtle">
                               <button
-                                onClick={() => startDownload(link.url, buildFilename(String(link.resolution), link.format), link.size_mb ? `${link.size_mb} MB` : undefined, link.headers)}
+                                onClick={() => handleInAppDownload(String(link.resolution), link.format, String(link.size_mb ?? ''))}
                                 disabled={!!activeTask}
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-background hover:bg-primary/5 text-xs font-black text-primary transition-colors disabled:opacity-50"
                               >
@@ -696,14 +694,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                                   : <><Download size={13} /> In-App</>}
                               </button>
                               <button
-                                onClick={async () => {
-                                  const filename = buildFilename(String(link.resolution), link.format);
-                                  const proxyUrl = `/api/dl?url=${encodeURIComponent(link.url)}&filename=${encodeURIComponent(filename)}`;
-                                  const a = document.createElement('a');
-                                  a.href = proxyUrl;
-                                  a.download = filename;
-                                  a.click();
-                                }}
+                                onClick={() => handleDirectDownload(String(link.resolution), link.format)}
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-background hover:bg-surface text-xs font-black text-gray-400 hover:text-foreground transition-colors border-l border-border-subtle"
                               >
                                 <ExternalLink size={13} /> Direct
