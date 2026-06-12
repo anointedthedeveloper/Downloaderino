@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/robots.txt", "destination": "/robots.txt" },
     { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
+    { "source": "/api/proxy/:path*", "destination": "https://movie-api-nine-chi.vercel.app/:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

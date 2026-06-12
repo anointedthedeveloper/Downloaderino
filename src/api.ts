@@ -1,8 +1,10 @@
 import axios from 'axios';
 
-// API calls go direct — the new API has CORS open for GET requests.
-// Downloads go through /api/dl (Vercel serverless) to add required headers server-side.
-const BASE_URL = 'https://movie-api-nine-chi.vercel.app';
+// All API calls go through /api/proxy/* (Vercel rewrite → upstream) to avoid
+// CORS. The /api/dl serverless function handles media downloads with headers.
+const BASE_URL = import.meta.env.DEV
+  ? 'https://movie-api-nine-chi.vercel.app'
+  : '/api/proxy';
 
 export const api = {
   search: (query: string, page: number = 1) =>
