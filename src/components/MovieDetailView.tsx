@@ -49,15 +49,18 @@ function getYear(dateStr: string): string {
   return dateStr.slice(0, 4);
 }
 
-// In-app download using fetch + ReadableStream for progress
+// In-app download using fetch + ReadableStream for progress.
+// Routed through /api/dl so the serverless function can attach the required
+// Origin/Referer headers — browsers forbid setting these directly.
 async function downloadWithProgress(
   url: string,
   filename: string,
   onProgress: (pct: number) => void,
   signal: AbortSignal,
-  headers?: Record<string, string>
+  _headers?: Record<string, string>  // kept for signature compat, headers added server-side
 ) {
-  const res = await fetch(url, { signal, headers: headers ?? {} });
+  const proxyUrl = `/api/dl?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
+  const res = await fetch(proxyUrl, { signal });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const contentLength = res.headers.get('content-length');
   const total = contentLength ? parseInt(contentLength, 10) : 0;
@@ -185,21 +188,12 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     const filename = epFrom != null
       ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
       : buildFilename(resolution, format, isSeason);
-    const { url, headers } = await getFreshUrlAndHeaders(resolution, isSeason, epFrom, epTo);
-    if (headers && Object.keys(headers).length > 0) {
-      // Headers required — must use fetch+blob since <a href> can't send headers
-      const blob = await fetch(url, { headers }).then(r => r.blob());
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    } else {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      a.click();
-    }
+    const { url } = await getFreshUrlAndHeaders(resolution, isSeason, epFrom, epTo);
+    const proxyUrl = `/api/dl?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
+    const a = document.createElement('a');
+    a.href = proxyUrl;
+    a.download = filename;
+    a.click();
   };
 
   const sendToBackground = (id: string) => {
@@ -704,19 +698,11 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                               <button
                                 onClick={async () => {
                                   const filename = buildFilename(String(link.resolution), link.format);
-                                  if (link.headers && Object.keys(link.headers).length > 0) {
-                                    const blob = await fetch(link.url, { headers: link.headers }).then(r => r.blob());
-                                    const a = document.createElement('a');
-                                    a.href = URL.createObjectURL(blob);
-                                    a.download = filename;
-                                    a.click();
-                                    URL.revokeObjectURL(a.href);
-                                  } else {
-                                    const a = document.createElement('a');
-                                    a.href = link.url;
-                                    a.download = filename;
-                                    a.click();
-                                  }
+                                  const proxyUrl = `/api/dl?url=${encodeURIComponent(link.url)}&filename=${encodeURIComponent(filename)}`;
+                                  const a = document.createElement('a');
+                                  a.href = proxyUrl;
+                                  a.download = filename;
+                                  a.click();
                                 }}
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-background hover:bg-surface text-xs font-black text-gray-400 hover:text-foreground transition-colors border-l border-border-subtle"
                               >
@@ -741,14 +727,13 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
                           {links.captions.map((cap, idx) => (
                             <button
                               key={idx}
-                              onClick={async () => {
+                              onClick={() => {
                                 const filename = `${movie.title.replace(/[^a-z0-9]/gi, '_')}_${cap.lang}.srt`;
-                                const blob = await fetch(cap.url, { headers: cap.headers ?? {} }).then(r => r.blob());
+                                const proxyUrl = `/api/dl?url=${encodeURIComponent(cap.url)}&filename=${encodeURIComponent(filename)}`;
                                 const a = document.createElement('a');
-                                a.href = URL.createObjectURL(blob);
+                                a.href = proxyUrl;
                                 a.download = filename;
                                 a.click();
-                                URL.revokeObjectURL(a.href);
                               }}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-background border border-border-subtle text-xs font-bold text-gray-400 hover:border-primary/40 hover:text-primary transition-all"
                             >
