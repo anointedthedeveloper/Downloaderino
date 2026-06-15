@@ -162,9 +162,6 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
   const getFreshUrlAndHeaders = async (
     resolution: string, isSeason: boolean, epFrom?: number, epTo?: number
   ): Promise<{ url: string; headers?: Record<string, string> }> => {
-    if (isSeason || epFrom != null) {
-      return { url: api.getSeasonStreamUrl(movie.subject_id, detailPath, season, resolution, 'en', 'folder', epFrom, epTo) };
-    }
     // Always fetch fresh — signed URLs expire
     const res = await api.getLinks(movie.subject_id, detailPath, effectiveSe, effectiveEp);
     const entry = res.data.downloads.find((d: any) => String(d.resolution) === resolution);
@@ -174,19 +171,63 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     };
   };
 
+  // Fetch all episode links for a season, filtered to a resolution and optional ep range
+  const getSeasonEpisodeLinks = async (
+    resolution: string, epFrom?: number, epTo?: number
+  ): Promise<Array<{ ep: number; url: string; headers?: Record<string, string> }>> => {
+    const res = await api.getSeasonLinks(movie.subject_id, detailPath, season);
+    const episodes: any[] = res.data;
+    return episodes
+      .filter((epData: any) => {
+        if (epFrom != null && epData.ep < epFrom) return false;
+        if (epTo != null && epData.ep > epTo) return false;
+        return true;
+      })
+      .map((epData: any) => {
+        const dl = epData.downloads?.find((d: any) => String(d.resolution) === resolution)
+          ?? epData.downloads?.[0];
+        return { ep: epData.ep, url: dl?.url, headers: dl?.headers };
+      })
+      .filter((e: any) => !!e.url);
+  };
+
   const handleInAppDownload = async (resolution: string, format: string, sizeMb: string, isSeason = false, epFrom?: number, epTo?: number) => {
-    const filename = epFrom != null
-      ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
-      : buildFilename(resolution, format, isSeason);
-    const { url, headers } = await getFreshUrlAndHeaders(resolution, isSeason, epFrom, epTo);
+    if (isSeason || epFrom != null) {
+      // Bulk: queue individual episode downloads
+      const episodes = await getSeasonEpisodeLinks(resolution, epFrom, isSeason ? undefined : epTo);
+      for (const ep of episodes) {
+        const title = movie.title.replace(/[^a-z0-9]/gi, '_');
+        const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
+        startDownload(ep.url, filename, undefined, ep.headers);
+      }
+      return;
+    }
+    const filename = buildFilename(resolution, format, false);
+    const { url, headers } = await getFreshUrlAndHeaders(resolution, false);
     startDownload(url, filename, sizeMb ? `${sizeMb} MB` : undefined, headers);
   };
 
   const handleDirectDownload = async (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
-    const filename = epFrom != null
-      ? `${movie.title.replace(/[^a-z0-9]/gi, '_')}_S${String(season).padStart(2,'0')}E${String(epFrom).padStart(2,'0')}-E${String(epTo).padStart(2,'0')}_${resolution}p.zip`
-      : buildFilename(resolution, format, isSeason);
-    const { url } = await getFreshUrlAndHeaders(resolution, isSeason, epFrom, epTo);
+    if (isSeason || epFrom != null) {
+      // Bulk: open each episode as a separate browser download
+      const episodes = await getSeasonEpisodeLinks(resolution, epFrom, isSeason ? undefined : epTo);
+      for (const ep of episodes) {
+        const title = movie.title.replace(/[^a-z0-9]/gi, '_');
+        const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
+        const proxyUrl = `/api/dl?url=${encodeURIComponent(ep.url)}&filename=${encodeURIComponent(filename)}`;
+        const a = document.createElement('a');
+        a.href = proxyUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        // Small delay to avoid browser blocking multiple downloads
+        await new Promise(r => setTimeout(r, 300));
+      }
+      return;
+    }
+    const filename = buildFilename(resolution, format, false);
+    const { url } = await getFreshUrlAndHeaders(resolution, false);
     const proxyUrl = `/api/dl?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
     const a = document.createElement('a');
     a.href = proxyUrl;
@@ -308,13 +349,13 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-black flex items-center gap-2">
-                  <Film size={20} className="text-primary" /> Episode Range ZIP
+                  <Film size={20} className="text-primary" /> Episode Range Download
                 </h3>
                 <button onClick={() => setShowRangeModal(false)} className="w-8 h-8 rounded-xl bg-background border border-border-subtle flex items-center justify-center text-gray-400 hover:text-foreground transition-colors">
                   <X size={14} />
                 </button>
               </div>
-              <p className="text-sm text-gray-400 font-medium">Download a range of episodes from Season {season} as a ZIP.</p>
+              <p className="text-sm text-gray-400 font-medium">Download a range of episodes from Season {season} individually.</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">From</label>
@@ -372,14 +413,14 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-black flex items-center gap-2">
-                  <Package size={20} className="text-primary" /> Full Season ZIP
+                  <Package size={20} className="text-primary" /> Full Season Download
                 </h3>
                 <button onClick={() => setShowSeasonModal(false)} className="w-8 h-8 rounded-xl bg-background border border-border-subtle flex items-center justify-center text-gray-400 hover:text-foreground transition-colors">
                   <X size={14} />
                 </button>
               </div>
               <p className="text-sm text-gray-400 font-medium">
-                Download all episodes of Season {season} as a ZIP archive.
+                Downloads all episodes of Season {season} individually.
               </p>
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Select Quality</label>
