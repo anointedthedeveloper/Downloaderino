@@ -197,7 +197,9 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
   const handleInAppDownload = async (resolution: string, format: string, sizeMb: string, isSeason = false, epFrom?: number, epTo?: number) => {
     if (isSeason || epFrom != null) {
       // Bulk: create a zip file with all episodes
+      console.log('Starting bulk download...');
       const episodes = await getSeasonEpisodeLinks(resolution, epFrom, isSeason ? undefined : epTo);
+      console.log('Episodes to download:', episodes.length);
       const title = movie.title.replace(/[^a-z0-9]/gi, '_');
       const zipFilename = `${title}_S${String(season).padStart(2,'0')}_${epFrom ? `E${epFrom}-${epTo}` : 'All'}_${resolution}p.zip`;
       
@@ -212,6 +214,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
         for (let i = 0; i < episodes.length; i++) {
           const ep = episodes[i];
           const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
+          console.log(`Downloading episode ${ep.ep} (${i + 1}/${episodes.length})`);
           
           // Fetch fresh URL for each episode to avoid expired signed URLs
           const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, season, ep.ep);
@@ -223,6 +226,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           
           const blob = await res.blob();
+          console.log(`Downloaded episode ${ep.ep}, size: ${blob.size} bytes`);
           zip.file(filename, blob);
           
           // Update progress
@@ -230,16 +234,20 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
           setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress } : d));
         }
         
+        console.log('Generating zip file...');
         // Generate and download the zip
         const zipBlob = await zip.generateAsync({ type: 'blob' });
+        console.log('Zip generated, size:', zipBlob.size, 'bytes');
         const a = document.createElement('a');
         a.href = URL.createObjectURL(zipBlob);
         a.download = zipFilename;
         a.click();
         URL.revokeObjectURL(a.href);
+        console.log('Zip download triggered');
         
         setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress: 100, status: 'done' } : d));
       } catch (e: any) {
+        console.error('Bulk download error:', e);
         if (e.name !== 'AbortError') {
           setDownloads(prev => prev.map(d => d.id === id ? { ...d, status: 'error' } : d));
         }
@@ -254,7 +262,9 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
   const handleDirectDownload = async (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
     if (isSeason || epFrom != null) {
       // Bulk: create a zip file with all episodes
+      console.log('Starting direct bulk download...');
       const episodes = await getSeasonEpisodeLinks(resolution, epFrom, isSeason ? undefined : epTo);
+      console.log('Episodes to download:', episodes.length);
       const title = movie.title.replace(/[^a-z0-9]/gi, '_');
       const zipFilename = `${title}_S${String(season).padStart(2,'0')}_${epFrom ? `E${epFrom}-${epTo}` : 'All'}_${resolution}p.zip`;
       
@@ -262,6 +272,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
       
       for (const ep of episodes) {
         const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
+        console.log(`Downloading episode ${ep.ep} for direct zip`);
         
         // Fetch fresh URL for each episode to avoid expired signed URLs
         const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, season, ep.ep);
@@ -273,16 +284,20 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
         const blob = await res.blob();
+        console.log(`Downloaded episode ${ep.ep}, size: ${blob.size} bytes`);
         zip.file(filename, blob);
       }
       
+      console.log('Generating zip file...');
       // Generate and download the zip
       const zipBlob = await zip.generateAsync({ type: 'blob' });
+      console.log('Zip generated, size:', zipBlob.size, 'bytes');
       const a = document.createElement('a');
       a.href = URL.createObjectURL(zipBlob);
       a.download = zipFilename;
       a.click();
       URL.revokeObjectURL(a.href);
+      console.log('Zip download triggered');
       
       return;
     }
