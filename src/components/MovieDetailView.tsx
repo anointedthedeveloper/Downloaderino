@@ -198,7 +198,9 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
       for (const ep of episodes) {
         const title = movie.title.replace(/[^a-z0-9]/gi, '_');
         const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
-        startDownload(ep.url, filename, undefined, ep.headers);
+        // Fetch fresh URL for each episode to avoid expired signed URLs
+        const { url: freshUrl, headers: freshHeaders } = await getFreshUrlAndHeaders(resolution, false, ep.ep, ep.ep);
+        startDownload(freshUrl || ep.url, filename, undefined, freshHeaders || ep.headers);
       }
       return;
     }
@@ -214,7 +216,9 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
       for (const ep of episodes) {
         const title = movie.title.replace(/[^a-z0-9]/gi, '_');
         const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
-        const proxyUrl = `/api/dl?url=${encodeURIComponent(ep.url)}&filename=${encodeURIComponent(filename)}`;
+        // Fetch fresh URL for each episode to avoid expired signed URLs
+        const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, false, ep.ep, ep.ep);
+        const proxyUrl = `/api/dl?url=${encodeURIComponent(freshUrl || ep.url)}&filename=${encodeURIComponent(filename)}`;
         const a = document.createElement('a');
         a.href = proxyUrl;
         a.download = filename;
