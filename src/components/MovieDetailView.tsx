@@ -160,7 +160,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
   };
 
   const getFreshUrlAndHeaders = async (
-    resolution: string, isSeason: boolean, epFrom?: number, epTo?: number
+    resolution: string
   ): Promise<{ url: string; headers?: Record<string, string> }> => {
     // Always fetch fresh — signed URLs expire
     const res = await api.getLinks(movie.subject_id, detailPath, effectiveSe, effectiveEp);
@@ -199,13 +199,13 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
         const title = movie.title.replace(/[^a-z0-9]/gi, '_');
         const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
         // Fetch fresh URL for each episode to avoid expired signed URLs
-        const { url: freshUrl, headers: freshHeaders } = await getFreshUrlAndHeaders(resolution, false, ep.ep, ep.ep);
+        const { url: freshUrl, headers: freshHeaders } = await getFreshUrlAndHeaders(resolution);
         startDownload(freshUrl || ep.url, filename, undefined, freshHeaders || ep.headers);
       }
       return;
     }
     const filename = buildFilename(resolution, format, false);
-    const { url, headers } = await getFreshUrlAndHeaders(resolution, false);
+    const { url, headers } = await getFreshUrlAndHeaders(resolution);
     startDownload(url, filename, sizeMb ? `${sizeMb} MB` : undefined, headers);
   };
 
@@ -217,7 +217,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
         const title = movie.title.replace(/[^a-z0-9]/gi, '_');
         const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
         // Fetch fresh URL for each episode to avoid expired signed URLs
-        const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, false, ep.ep, ep.ep);
+        const { url: freshUrl } = await getFreshUrlAndHeaders(resolution);
         const proxyUrl = `/api/dl?url=${encodeURIComponent(freshUrl || ep.url)}&filename=${encodeURIComponent(filename)}`;
         const a = document.createElement('a');
         a.href = proxyUrl;
@@ -231,7 +231,7 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
       return;
     }
     const filename = buildFilename(resolution, format, false);
-    const { url } = await getFreshUrlAndHeaders(resolution, false);
+    const { url } = await getFreshUrlAndHeaders(resolution);
     const proxyUrl = `/api/dl?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`;
     const a = document.createElement('a');
     a.href = proxyUrl;
