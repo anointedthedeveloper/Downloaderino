@@ -4,6 +4,7 @@ import {
   Layers, Film, Calendar, Globe, Award, ExternalLink, ShieldCheck, Zap, Clock, X, Package, WifiOff, Languages, Subtitles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import JSZip from 'jszip';
 import type { MovieDetail, LinksResponse } from '../types';
 import { StatCard } from './StatCard';
 import { api } from '../api';
@@ -160,13 +161,15 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
   };
 
   const getFreshUrlAndHeaders = async (
-    resolution: string
+    resolution: string, se?: number, ep?: number
   ): Promise<{ url: string; headers?: Record<string, string> }> => {
     // Always fetch fresh — signed URLs expire
-    const res = await api.getLinks(movie.subject_id, detailPath, effectiveSe, effectiveEp);
+    const targetSe = se ?? effectiveSe;
+    const targetEp = ep ?? effectiveEp;
+    const res = await api.getLinks(movie.subject_id, detailPath, targetSe, targetEp);
     const entry = res.data.downloads.find((d: any) => String(d.resolution) === resolution);
     return {
-      url: entry?.url ?? api.getStreamUrl(movie.subject_id, detailPath, effectiveSe, effectiveEp, resolution),
+      url: entry?.url ?? api.getStreamUrl(movie.subject_id, detailPath, targetSe, targetEp, resolution),
       headers: entry?.headers,
     };
   };
@@ -193,14 +196,53 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
 
   const handleInAppDownload = async (resolution: string, format: string, sizeMb: string, isSeason = false, epFrom?: number, epTo?: number) => {
     if (isSeason || epFrom != null) {
-      // Bulk: queue individual episode downloads
+      // Bulk: create a zip file with all episodes
       const episodes = await getSeasonEpisodeLinks(resolution, epFrom, isSeason ? undefined : epTo);
-      for (const ep of episodes) {
-        const title = movie.title.replace(/[^a-z0-9]/gi, '_');
-        const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
-        // Fetch fresh URL for each episode to avoid expired signed URLs
-        const { url: freshUrl, headers: freshHeaders } = await getFreshUrlAndHeaders(resolution);
-        startDownload(freshUrl || ep.url, filename, undefined, freshHeaders || ep.headers);
+      const title = movie.title.replace(/[^a-z0-9]/gi, '_');
+      const zipFilename = `${title}_S${String(season).padStart(2,'0')}_${epFrom ? `E${epFrom}-${epTo}` : 'All'}_${resolution}p.zip`;
+      
+      const id = Date.now().toString();
+      const ctrl = new AbortController();
+      abortRefs.current[id] = ctrl;
+      setDownloads(prev => [...prev, { id, name: zipFilename, url: '', progress: 0, status: 'downloading' }]);
+
+      try {
+        const zip = new JSZip();
+        
+        for (let i = 0; i < episodes.length; i++) {
+          const ep = episodes[i];
+          const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
+          
+          // Fetch fresh URL for each episode to avoid expired signed URLs
+          const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, season, ep.ep);
+          const downloadUrl = freshUrl || ep.url;
+          
+          // Download the episode
+          const proxyUrl = `/api/dl?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(filename)}`;
+          const res = await fetch(proxyUrl, { signal: ctrl.signal });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          
+          const blob = await res.blob();
+          zip.file(filename, blob);
+          
+          // Update progress
+          const progress = Math.round(((i + 1) / episodes.length) * 100);
+          setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress } : d));
+        }
+        
+        // Generate and download the zip
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(zipBlob);
+        a.download = zipFilename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        
+        setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress: 100, status: 'done' } : d));
+      } catch (e: any) {
+        if (e.name !== 'AbortError') {
+          setDownloads(prev => prev.map(d => d.id === id ? { ...d, status: 'error' } : d));
+        }
       }
       return;
     }
@@ -211,23 +253,37 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
 
   const handleDirectDownload = async (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
     if (isSeason || epFrom != null) {
-      // Bulk: open each episode as a separate browser download
+      // Bulk: create a zip file with all episodes
       const episodes = await getSeasonEpisodeLinks(resolution, epFrom, isSeason ? undefined : epTo);
+      const title = movie.title.replace(/[^a-z0-9]/gi, '_');
+      const zipFilename = `${title}_S${String(season).padStart(2,'0')}_${epFrom ? `E${epFrom}-${epTo}` : 'All'}_${resolution}p.zip`;
+      
+      const zip = new JSZip();
+      
       for (const ep of episodes) {
-        const title = movie.title.replace(/[^a-z0-9]/gi, '_');
         const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
+        
         // Fetch fresh URL for each episode to avoid expired signed URLs
-        const { url: freshUrl } = await getFreshUrlAndHeaders(resolution);
-        const proxyUrl = `/api/dl?url=${encodeURIComponent(freshUrl || ep.url)}&filename=${encodeURIComponent(filename)}`;
-        const a = document.createElement('a');
-        a.href = proxyUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        // Small delay to avoid browser blocking multiple downloads
-        await new Promise(r => setTimeout(r, 300));
+        const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, season, ep.ep);
+        const downloadUrl = freshUrl || ep.url;
+        
+        // Download the episode
+        const proxyUrl = `/api/dl?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(filename)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
+        const blob = await res.blob();
+        zip.file(filename, blob);
       }
+      
+      // Generate and download the zip
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zipBlob);
+      a.download = zipFilename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      
       return;
     }
     const filename = buildFilename(resolution, format, false);
