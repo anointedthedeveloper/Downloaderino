@@ -167,9 +167,11 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     const targetSe = se ?? effectiveSe;
     const targetEp = ep ?? effectiveEp;
     const res = await api.getLinks(movie.subject_id, detailPath, targetSe, targetEp);
-    const entry = res.data.downloads.find((d: any) => String(d.resolution) === resolution);
+    // Prefer exact resolution; fall back to first available entry (never a relative stream URL)
+    const entry = res.data.downloads.find((d: any) => String(d.resolution) === resolution)
+      ?? res.data.downloads[0];
     return {
-      url: entry?.url ?? api.getStreamUrl(movie.subject_id, detailPath, targetSe, targetEp, resolution),
+      url: entry?.url ?? '',
       headers: entry?.headers,
     };
   };
@@ -216,6 +218,11 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
           const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, season, ep.ep);
           const downloadUrl = freshUrl || ep.url;
           
+          if (!downloadUrl) {
+            console.warn(`No URL found for episode ${ep.ep}, skipping`);
+            continue;
+          }
+
           // Download the episode
           const proxyUrl = `/api/dl?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(filename)}`;
           const res = await fetch(proxyUrl, { signal: ctrl.signal });
@@ -273,7 +280,12 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
         // Fetch fresh URL for each episode to avoid expired signed URLs
         const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, season, ep.ep);
         const downloadUrl = freshUrl || ep.url;
-        
+
+        if (!downloadUrl) {
+          console.warn(`No URL found for episode ${ep.ep}, skipping`);
+          continue;
+        }
+
         // Download the episode
         const proxyUrl = `/api/dl?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(filename)}`;
         const res = await fetch(proxyUrl);

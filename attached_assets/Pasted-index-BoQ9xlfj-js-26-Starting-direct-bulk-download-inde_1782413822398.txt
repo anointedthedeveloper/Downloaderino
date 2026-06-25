@@ -1,0 +1,85 @@
+index-BoQ9xlfj.js:26 Starting direct bulk download...
+index-BoQ9xlfj.js:26 Episodes to download: 5
+index-BoQ9xlfj.js:26 Downloading episode 1 for direct zip
+index-BoQ9xlfj.js:26 Starting direct bulk download...
+index-BoQ9xlfj.js:26 Episodes to download: 5
+index-BoQ9xlfj.js:26 Downloading episode 1 for direct zip
+index-BoQ9xlfj.js:26 Starting bulk download...
+index-BoQ9xlfj.js:26 Episodes to download: 15
+index-BoQ9xlfj.js:26 Downloading episode 1 (1/15)
+index-BoQ9xlfj.js:19 XHR finished loading: GET "https://downloaderino.vercel.app/api/proxy/links?subjectId=7812224542075936776&detailPath=the-simpsons-2nXz41q46j9&se=37&ep=1".
+(anonymous) @ index-BoQ9xlfj.js:19
+xhr @ index-BoQ9xlfj.js:19
+Ig @ index-BoQ9xlfj.js:21
+_request @ index-BoQ9xlfj.js:25
+request @ index-BoQ9xlfj.js:21
+sa.<computed> @ index-BoQ9xlfj.js:25
+(anonymous) @ index-BoQ9xlfj.js:17
+getLinks @ index-BoQ9xlfj.js:25
+Mt @ index-BoQ9xlfj.js:26
+Yt @ index-BoQ9xlfj.js:26
+await in Yt
+onClick @ index-BoQ9xlfj.js:26
+S0 @ index-BoQ9xlfj.js:8
+(anonymous) @ index-BoQ9xlfj.js:8
+Ch @ index-BoQ9xlfj.js:8
+Hc @ index-BoQ9xlfj.js:8
+Jc @ index-BoQ9xlfj.js:9
+X2 @ index-BoQ9xlfj.js:9
+index-BoQ9xlfj.js:26  GET https://downloaderino.vercel.app/api/dl?url=%2Fapi%2Fproxy%2Fstream%3FsubjectId%3D7812224542075936776%26detailPath%3Dthe-simpsons-2nXz41q46j9%26se%3D37%26ep%3D1%26resolution%3D1080&filename=The_Simpsons_S1_S37_S37E01_1080p.mp4 400 (Bad Request)
+Yt @ index-BoQ9xlfj.js:26
+await in Yt
+onClick @ index-BoQ9xlfj.js:26
+S0 @ index-BoQ9xlfj.js:8
+(anonymous) @ index-BoQ9xlfj.js:8
+Ch @ index-BoQ9xlfj.js:8
+Hc @ index-BoQ9xlfj.js:8
+Jc @ index-BoQ9xlfj.js:9
+X2 @ index-BoQ9xlfj.js:9
+index-BoQ9xlfj.js:26 Bulk download error: Error: HTTP 400
+    at Yt (index-BoQ9xlfj.js:26:96057)
+Yt @ index-BoQ9xlfj.js:26
+await in Yt
+onClick @ index-BoQ9xlfj.js:26
+S0 @ index-BoQ9xlfj.js:8
+(anonymous) @ index-BoQ9xlfj.js:8
+Ch @ index-BoQ9xlfj.js:8
+Hc @ index-BoQ9xlfj.js:8
+Jc @ index-BoQ9xlfj.js:9
+X2 @ index-BoQ9xlfj.js:9
+index-BoQ9xlfj.js:26 Fetch failed loading: GET "https://downloaderino.vercel.app/api/dl?url=%2Fapi%2Fproxy%2Fstream%3FsubjectId%3D7812224542075936776%26detailPath%3Dthe-simpsons-2nXz41q46j9%26se%3D37%26ep%3D1%26resolution%3D1080&filename=The_Simpsons_S1_S37_S37E01_1080p.mp4".
+Yt @ index-BoQ9xlfj.js:26
+await in Yt
+onClick @ index-BoQ9xlfj.js:26
+S0 @ index-BoQ9xlfj.js:8
+(anonymous) @ index-BoQ9xlfj.js:8
+Ch @ index-BoQ9xlfj.js:8
+Hc @ index-BoQ9xlfj.js:8
+Jc @ index-BoQ9xlfj.js:9
+X2 @ index-BoQ9xlfj.js:9
+index-BoQ9xlfj.js:26 Downloaded episode 1, size: 63008731 bytes
+index-BoQ9xlfj.js:26 Downloading episode 2 for direct zip
+index-BoQ9xlfj.js:19 XHR finished loading: GET "https://downloaderino.vercel.app/api/proxy/links?subjectId=7812224542075936776&detailPath=the-simpsons-2nXz41q46j9&se=37&ep=2".
+(anonymous) @ index-BoQ9xlfj.js:19
+xhr @ index-BoQ9xlfj.js:19
+Ig @ index-BoQ9xlfj.js:21
+_request @ index-BoQ9xlfj.js:25
+request @ index-BoQ9xlfj.js:21
+sa.<computed> @ index-BoQ9xlfj.js:25
+(anonymous) @ index-BoQ9xlfj.js:17
+getLinks @ index-BoQ9xlfj.js:25
+Mt @ index-BoQ9xlfj.js:26
+Zt @ index-BoQ9xlfj.js:26
+index-BoQ9xlfj.js:26 Downloaded episode 1, size: 63008731 bytes
+index-BoQ9xlfj.js:26 Downloading episode 2 for direct zip
+index-BoQ9xlfj.js:19 XHR finished loading: GET "https://downloaderino.vercel.app/api/proxy/links?subjectId=7812224542075936776&detailPath=the-simpsons-2nXz41q46j9&se=37&ep=2".
+(anonymous) @ index-BoQ9xlfj.js:19
+xhr @ index-BoQ9xlfj.js:19
+Ig @ index-BoQ9xlfj.js:21
+_request @ index-BoQ9xlfj.js:25
+request @ index-BoQ9xlfj.js:21
+sa.<computed> @ index-BoQ9xlfj.js:25
+(anonymous) @ index-BoQ9xlfj.js:17
+getLinks @ index-BoQ9xlfj.js:25
+Mt @ index-BoQ9xlfj.js:26
+Zt @ index-BoQ9xlfj.js:26
