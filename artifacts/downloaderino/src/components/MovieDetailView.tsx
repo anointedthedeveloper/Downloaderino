@@ -174,24 +174,20 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     };
   };
 
-  // Fetch all episode links for a season, filtered to a resolution and optional ep range
+  // Build the episode list from the known maxEp count and filter by range.
+  // URLs are fetched fresh per-episode via getFreshUrlAndHeaders in the calling loop
+  // (no bulk /links/season endpoint exists on the upstream API).
   const getSeasonEpisodeLinks = async (
-    resolution: string, epFrom?: number, epTo?: number
+    _resolution: string, epFrom?: number, epTo?: number
   ): Promise<Array<{ ep: number; url: string; headers?: Record<string, string> }>> => {
-    const res = await api.getSeasonLinks(movie.subject_id, detailPath, season);
-    const episodes: any[] = res.data;
-    return episodes
-      .filter((epData: any) => {
-        if (epFrom != null && epData.ep < epFrom) return false;
-        if (epTo != null && epData.ep > epTo) return false;
-        return true;
-      })
-      .map((epData: any) => {
-        const dl = epData.downloads?.find((d: any) => String(d.resolution) === resolution)
-          ?? epData.downloads?.[0];
-        return { ep: epData.ep, url: dl?.url, headers: dl?.headers };
-      })
-      .filter((e: any) => !!e.url);
+    const from = epFrom ?? 1;
+    const to = epTo ?? maxEp;
+    if (to < 1) return [];
+    const result: Array<{ ep: number; url: string }> = [];
+    for (let ep = from; ep <= to; ep++) {
+      result.push({ ep, url: '' });
+    }
+    return result;
   };
 
   const handleInAppDownload = async (resolution: string, format: string, sizeMb: string, isSeason = false, epFrom?: number, epTo?: number) => {
