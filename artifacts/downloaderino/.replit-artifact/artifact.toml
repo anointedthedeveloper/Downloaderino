@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Downloaderino"
+version = "1.0.0"
+id = "artifacts/downloaderino"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23770
+
+[services.development]
+run = "pnpm --filter @workspace/downloaderino run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/downloaderino", "run", "build" ]
+publicDir = "artifacts/downloaderino/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23770"
+BASE_PATH = "/"
