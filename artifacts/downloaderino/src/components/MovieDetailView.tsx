@@ -264,26 +264,18 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
 
   const handleDirectDownload = async (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
     if (isSeason || epFrom != null) {
-      // Direct bulk: collect all CDN URLs (fast — no video data transferred) and
-      // export an aria2c-compatible download list the user can feed to any download manager.
+      // Bulk: fetch each episode through the proxy, bundle all into a zip file
       const episodes = await getSeasonEpisodeLinks(resolution, epFrom, isSeason ? undefined : epTo);
       const title = movie.title.replace(/[^a-z0-9]/gi, '_');
-      const rangeLabel = epFrom ? `E${epFrom}-${epTo ?? maxEp}` : 'All';
-      const listFilename = `${title}_S${String(season).padStart(2,'0')}_${rangeLabel}_${resolution}p_links.txt`;
+      const zipFilename = `${title}_S${String(season).padStart(2,'0')}_${epFrom ? `E${epFrom}-${epTo}` : 'All'}_${resolution}p.zip`;
 
       const id = Date.now().toString();
       const ctrl = new AbortController();
       abortRefs.current[id] = ctrl;
-      setDownloads(prev => [...prev, { id, name: listFilename, url: '', progress: 0, status: 'downloading' }]);
+      setDownloads(prev => [...prev, { id, name: zipFilename, url: '', progress: 0, status: 'downloading' }]);
 
       try {
-        const lines: string[] = [
-          `# Downloaderino — ${movie.title} | Season ${season} | ${rangeLabel} | ${resolution}p`,
-          `# Generated: ${new Date().toISOString()}`,
-          `# Use with: aria2c --input-file="${listFilename}"`,
-          `# Or wget:  wget --header="Origin: https://downloader2.com" --header="Referer: https://downloader2.com/" -i <(grep -v '^#\\|^ ' ${listFilename})`,
-          '',
-        ];
+        const zip = new JSZip();
 
         for (let i = 0; i < episodes.length; i++) {
           if (ctrl.signal.aborted) break;
@@ -295,23 +287,24 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
 
           if (!downloadUrl) {
             console.warn(`No URL found for episode ${ep.ep}, skipping`);
-          } else {
-            // aria2c entry: URL on its own line, then indented options
-            lines.push(downloadUrl);
-            lines.push(`  header=Origin: https://downloader2.com`);
-            lines.push(`  header=Referer: https://downloader2.com/`);
-            lines.push(`  out=${filename}`);
-            lines.push('');
+            continue;
           }
+
+          const proxyUrl = `/api/dl?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(filename)}`;
+          const res = await fetch(proxyUrl, { signal: ctrl.signal });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+          const blob = await res.blob();
+          zip.file(filename, blob);
 
           const progress = Math.round(((i + 1) / episodes.length) * 100);
           setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress } : d));
         }
 
-        const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = listFilename;
+        a.href = URL.createObjectURL(zipBlob);
+        a.download = zipFilename;
         a.click();
         URL.revokeObjectURL(a.href);
 
