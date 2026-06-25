@@ -1,0 +1,51 @@
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+XHR finished loading: GET "<URL>".
+index-CyM4w0d5.js:26 Starting bulk download...
+index-CyM4w0d5.js:26 Episodes to download: 5
+index-CyM4w0d5.js:26 Downloading episode 1 (1/5)
+index-CyM4w0d5.js:26 Starting direct bulk download...
+index-CyM4w0d5.js:26 Episodes to download: 5
+index-CyM4w0d5.js:26 Downloading episode 1 for direct zip
+Fetch finished loading: GET "<URL>".
+Fetch finished loading: GET "<URL>".
+Fetch finished loading: GET "<URL>".
+Fetch finished loading: GET "<URL>".
+Fetch finished loading: GET "<URL>".
+Fetch finished loading: GET "<URL>".
+Fetch finished loading: GET "<URL>".
+Fetch finished loading: GET "<URL>".
+Fetch finished loading: GET "<URL>".
+Fetch finished loading: GET "<URL>".
+index-CyM4w0d5.js:26 Downloaded episode 1, size: 66763511 bytes
+index-CyM4w0d5.js:26 Downloading episode 2 (2/5)
+index-CyM4w0d5.js:26 Downloaded episode 1, size: 66763511 bytes
+index-CyM4w0d5.js:26 Downloading episode 2 for direct zip
+index-CyM4w0d5.js:26 Downloaded episode 2, size: 68156568 bytes
+index-CyM4w0d5.js:26 Downloading episode 3 (3/5)
+index-CyM4w0d5.js:26 Downloaded episode 2, size: 68156568 bytes
+index-CyM4w0d5.js:26 Downloading episode 3 for direct zip
+index-CyM4w0d5.js:26 Downloaded episode 3, size: 68211215 bytes
+index-CyM4w0d5.js:26 Downloading episode 4 (4/5)
+index-CyM4w0d5.js:26 Downloaded episode 3, size: 68211215 bytes
+index-CyM4w0d5.js:26 Downloading episode 4 for direct zip
+index-CyM4w0d5.js:26 Downloaded episode 4, size: 65931934 bytes
+index-CyM4w0d5.js:26 Downloading episode 5 (5/5)
+index-CyM4w0d5.js:26 Downloaded episode 4, size: 65931934 bytes
+index-CyM4w0d5.js:26 Downloading episode 5 for direct zip
+index-CyM4w0d5.js:26 Downloaded episode 5, size: 66817239 bytes
+index-CyM4w0d5.js:26 Generating zip file...
+index-CyM4w0d5.js:26 Zip generated, size: 335881219 bytes
+index-CyM4w0d5.js:26 Zip download triggered
+index-CyM4w0d5.js:26 Downloaded episode 5, size: 66817239 bytes
+index-CyM4w0d5.js:26 Generating zip file...
+index-CyM4w0d5.js:26 Zip generated, size: 335881219 bytes
+index-CyM4w0d5.js:26 Zip download triggered

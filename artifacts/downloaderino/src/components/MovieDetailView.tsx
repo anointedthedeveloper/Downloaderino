@@ -264,49 +264,63 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
 
   const handleDirectDownload = async (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
     if (isSeason || epFrom != null) {
-      // Bulk: create a zip file with all episodes
-      console.log('Starting direct bulk download...');
+      // Direct bulk: collect all CDN URLs (fast — no video data transferred) and
+      // export an aria2c-compatible download list the user can feed to any download manager.
       const episodes = await getSeasonEpisodeLinks(resolution, epFrom, isSeason ? undefined : epTo);
-      console.log('Episodes to download:', episodes.length);
       const title = movie.title.replace(/[^a-z0-9]/gi, '_');
-      const zipFilename = `${title}_S${String(season).padStart(2,'0')}_${epFrom ? `E${epFrom}-${epTo}` : 'All'}_${resolution}p.zip`;
-      
-      const zip = new JSZip();
-      
-      for (const ep of episodes) {
-        const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
-        console.log(`Downloading episode ${ep.ep} for direct zip`);
-        
-        // Fetch fresh URL for each episode to avoid expired signed URLs
-        const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, season, ep.ep);
-        const downloadUrl = freshUrl || ep.url;
+      const rangeLabel = epFrom ? `E${epFrom}-${epTo ?? maxEp}` : 'All';
+      const listFilename = `${title}_S${String(season).padStart(2,'0')}_${rangeLabel}_${resolution}p_links.txt`;
 
-        if (!downloadUrl) {
-          console.warn(`No URL found for episode ${ep.ep}, skipping`);
-          continue;
+      const id = Date.now().toString();
+      const ctrl = new AbortController();
+      abortRefs.current[id] = ctrl;
+      setDownloads(prev => [...prev, { id, name: listFilename, url: '', progress: 0, status: 'downloading' }]);
+
+      try {
+        const lines: string[] = [
+          `# Downloaderino — ${movie.title} | Season ${season} | ${rangeLabel} | ${resolution}p`,
+          `# Generated: ${new Date().toISOString()}`,
+          `# Use with: aria2c --input-file="${listFilename}"`,
+          `# Or wget:  wget --header="Origin: https://downloader2.com" --header="Referer: https://downloader2.com/" -i <(grep -v '^#\\|^ ' ${listFilename})`,
+          '',
+        ];
+
+        for (let i = 0; i < episodes.length; i++) {
+          if (ctrl.signal.aborted) break;
+          const ep = episodes[i];
+          const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
+
+          const { url: freshUrl } = await getFreshUrlAndHeaders(resolution, season, ep.ep);
+          const downloadUrl = freshUrl || ep.url;
+
+          if (!downloadUrl) {
+            console.warn(`No URL found for episode ${ep.ep}, skipping`);
+          } else {
+            // aria2c entry: URL on its own line, then indented options
+            lines.push(downloadUrl);
+            lines.push(`  header=Origin: https://downloader2.com`);
+            lines.push(`  header=Referer: https://downloader2.com/`);
+            lines.push(`  out=${filename}`);
+            lines.push('');
+          }
+
+          const progress = Math.round(((i + 1) / episodes.length) * 100);
+          setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress } : d));
         }
 
-        // Download the episode
-        const proxyUrl = `/api/dl?url=${encodeURIComponent(downloadUrl)}&filename=${encodeURIComponent(filename)}`;
-        const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
-        const blob = await res.blob();
-        console.log(`Downloaded episode ${ep.ep}, size: ${blob.size} bytes`);
-        zip.file(filename, blob);
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = listFilename;
+        a.click();
+        URL.revokeObjectURL(a.href);
+
+        setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress: 100, status: 'done' } : d));
+      } catch (e: any) {
+        if (e.name !== 'AbortError') {
+          setDownloads(prev => prev.map(d => d.id === id ? { ...d, status: 'error' } : d));
+        }
       }
-      
-      console.log('Generating zip file...');
-      // Generate and download the zip
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      console.log('Zip generated, size:', zipBlob.size, 'bytes');
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(zipBlob);
-      a.download = zipFilename;
-      a.click();
-      URL.revokeObjectURL(a.href);
-      console.log('Zip download triggered');
-      
       return;
     }
     const filename = buildFilename(resolution, format, false);
