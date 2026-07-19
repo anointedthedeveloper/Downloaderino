@@ -174,23 +174,23 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
     };
   };
 
-  // Fetch all episode links for a season, filtered to a resolution and optional ep range
+  // Fetch all episode links for a season using /stream/season, filtered to optional ep range
   const getSeasonEpisodeLinks = async (
     resolution: string, epFrom?: number, epTo?: number
   ): Promise<Array<{ ep: number; url: string; headers?: Record<string, string> }>> => {
-    const res = await api.getSeasonLinks(movie.subject_id, detailPath, season);
-    const episodes: any[] = res.data;
+    const res = await api.getSeasonStream(movie.subject_id, detailPath, season, resolution);
+    const episodes: any[] = res.data.episodes;
     return episodes
       .filter((epData: any) => {
         if (epFrom != null && epData.ep < epFrom) return false;
         if (epTo != null && epData.ep > epTo) return false;
         return true;
       })
-      .map((epData: any) => {
-        const dl = epData.downloads?.find((d: any) => String(d.resolution) === resolution)
-          ?? epData.downloads?.[0];
-        return { ep: epData.ep, url: dl?.url, headers: dl?.headers };
-      })
+      .map((epData: any) => ({
+        ep: epData.ep,
+        url: epData.video?.url,
+        headers: epData.video?.headers,
+      }))
       .filter((e: any) => !!e.url);
   };
 
