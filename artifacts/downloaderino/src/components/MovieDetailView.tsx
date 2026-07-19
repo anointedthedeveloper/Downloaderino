@@ -192,64 +192,13 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
       .map((e: any) => ({ ep: e.ep, url: e.video.url, headers: e.video.headers }));
   };
 
-  const bulkZipDownload = async (resolution: string, epFrom?: number, epTo?: number, isSeason = false) => {
-    const episodes = await getSeasonEpisodeLinks(resolution, epFrom, isSeason ? undefined : epTo);
-    if (!episodes.length) return;
-    const title = movie.title.replace(/[^a-z0-9]/gi, '_');
-    const zipFilename = `${title}_S${String(season).padStart(2,'0')}_${epFrom ? `E${epFrom}-E${epTo}` : 'All'}_${resolution}p.zip`;
-
-    const id = Date.now().toString();
-    const ctrl = new AbortController();
-    abortRefs.current[id] = ctrl;
-    setDownloads(prev => [...prev, { id, name: zipFilename, url: '', progress: 0, status: 'downloading' }]);
-
-    try {
-      const fileStream = streamSaver.createWriteStream(zipFilename);
-      const writer = fileStream.getWriter();
-
-      await new Promise<void>((resolve, reject) => {
-        const zip = new fflate.Zip((err, chunk, final) => {
-          if (err) { writer.abort(); reject(err); return; }
-          writer.write(chunk);
-          if (final) { writer.close(); resolve(); }
-        });
-
-        (async () => {
-          try {
-            for (let i = 0; i < episodes.length; i++) {
-              if (ctrl.signal.aborted) break;
-              const ep = episodes[i];
-              const filename = `${title}_S${String(season).padStart(2,'0')}E${String(ep.ep).padStart(2,'0')}_${resolution}p.mp4`;
-              const proxyUrl = `/api/dl?url=${encodeURIComponent(ep.url)}&filename=${encodeURIComponent(filename)}`;
-              const res = await fetch(proxyUrl, { signal: ctrl.signal });
-              if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-              const deflate = new fflate.ZipDeflate(filename, { level: 0 });
-              zip.add(deflate);
-              const reader = res.body!.getReader();
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) { deflate.push(new Uint8Array(0), true); break; }
-                deflate.push(value);
-              }
-              setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress: Math.round(((i + 1) / episodes.length) * 100) } : d));
-            }
-            zip.end();
-          } catch (e) { reject(e); }
-        })();
-      });
-
-      setDownloads(prev => prev.map(d => d.id === id ? { ...d, progress: 100, status: 'done' } : d));
-    } catch (e: any) {
-      if (e.name !== 'AbortError') {
-        setDownloads(prev => prev.map(d => d.id === id ? { ...d, status: 'error' } : d));
-      }
-    }
-  };
-
   const handleInAppDownload = async (resolution: string, format: string, sizeMb: string, isSeason = false, epFrom?: number, epTo?: number) => {
     if (isSeason || epFrom != null) {
-      return bulkZipDownload(resolution, epFrom, epTo, isSeason);
+      const title = movie.title.replace(/[^a-z0-9]/gi, '_');
+      let url = `/api/dl/season?subjectId=${movie.subject_id}&detailPath=${encodeURIComponent(detailPath)}&se=${season}&resolution=${resolution}&title=${encodeURIComponent(title)}`;
+      if (epFrom != null) url += `&epFrom=${epFrom}&epTo=${epTo}`;
+      window.location.href = url;
+      return;
     }
     const filename = buildFilename(resolution, format, false);
     const { url, headers } = await getFreshUrlAndHeaders(resolution);
@@ -258,7 +207,11 @@ export const MovieDetailView: React.FC<MovieDetailViewProps> = ({
 
   const handleDirectDownload = async (resolution: string, format: string, isSeason = false, epFrom?: number, epTo?: number) => {
     if (isSeason || epFrom != null) {
-      return bulkZipDownload(resolution, epFrom, epTo, isSeason);
+      const title = movie.title.replace(/[^a-z0-9]/gi, '_');
+      let url = `/api/dl/season?subjectId=${movie.subject_id}&detailPath=${encodeURIComponent(detailPath)}&se=${season}&resolution=${resolution}&title=${encodeURIComponent(title)}`;
+      if (epFrom != null) url += `&epFrom=${epFrom}&epTo=${epTo}`;
+      window.location.href = url;
+      return;
     }
     const filename = buildFilename(resolution, format, false);
     const { url } = await getFreshUrlAndHeaders(resolution);
