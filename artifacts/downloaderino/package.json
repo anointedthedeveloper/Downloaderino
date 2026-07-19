@@ -77,7 +77,9 @@
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "axios": "^1.18.1",
+    "fflate": "^0.8.2",
     "jszip": "^3.10.1",
-    "react-helmet-async": "^3.0.0"
+    "react-helmet-async": "^3.0.0",
+    "streamsaver": "^2.0.6"
   }
 }
