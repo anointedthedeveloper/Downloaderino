@@ -19,6 +19,12 @@ export const api = {
   
   getSeasonLinks: (subjectId: string, detailPath: string, se: number = 1) =>
     axios.get(`${BASE_URL}/links/season?subjectId=${subjectId}&detailPath=${encodeURIComponent(detailPath)}&se=${se}`),
+
+  getSeasonStream: (subjectId: string, detailPath: string, se: number = 1, resolution?: string) => {
+    let url = `${BASE_URL}/stream/season?subjectId=${subjectId}&detailPath=${encodeURIComponent(detailPath)}&se=${se}`;
+    if (resolution) url += `&resolution=${resolution}`;
+    return axios.get(url);
+  },
   
   getStreamUrl: (subjectId: string, detailPath: string, se: number = 1, ep: number = 1, resolution?: string, lang?: string) => {
     let url = `${BASE_URL}/stream?subjectId=${subjectId}&detailPath=${encodeURIComponent(detailPath)}&se=${se}&ep=${ep}`;
